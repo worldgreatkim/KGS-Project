@@ -1,0 +1,47 @@
+# ASSET_CREDITS — 세이프 키친 (Unity판)
+
+공모전 제출 문서용 에셋 출처 기록. 새 에셋 추가 시 반드시 갱신.
+
+## 구매/스토어 에셋
+
+| 에셋 | 출처 | 라이선스 |
+|---|---|---|
+| Free Kitchen - Cabinets and Equipment (가구 27종) | Unity Asset Store, BOXX-GAMES ASSETS | Unity Asset Store 표준 EULA (프로젝트 임베드 배포 허용) |
+| Cartoon FX Remaster Free (VFX: 화재·연기·뿅·바람) | Unity Asset Store, Jean Moreno (JMO) | Unity Asset Store 표준 EULA — 사용 프리팹은 Resources/VFX에 복사본 |
+| Fog Particles (가스 누출 안개 — 회색 틴트·알파 곡선 커스텀) | Unity Asset Store | Unity Asset Store 표준 EULA — Whitish Fog를 Resources/VFX/GasFog로 복사 |
+
+## 생성형 AI 에셋 (2단계 파이프라인: Gemini 이미지 → Tripo AI image-to-3D)
+
+- 이미지 생성: Google Gemini (나노바나나) — 프롬프트: `TRIPO_프롬프트.md` 참조, 원본 이미지: `refs/` 폴더
+- 3D 변환: Tripo AI API (image_to_model, 텍스처 포함) — 2026-08-22 생성
+- 위치: `Assets/Models3D/*.glb`
+
+| 파일 | 원본 이미지 | 용도 |
+|---|---|---|
+| ValveBody.glb | refs/밸브 몸체.png | 가스 중간밸브 몸체 (잠그기 상호작용 고정부) |
+| ValveLever.glb | refs/레버 손잡이.png | 밸브 레버 (90도 회전 가동부) |
+| StoveStation.glb | refs/가스레인지.png | 오버쿡형 가스레인지 스테이션 |
+| CounterBlock.glb | refs/기본 조리대 블록.png | 모듈 조리대 1칸 |
+| CounterBlockLong.glb | refs/기본 조리대 블록 2배.png | 모듈 조리대 2칸 |
+| SinkStation.glb | refs/싱크대.png | 싱크 스테이션 |
+| FridgeMint.glb | refs/냉장고.png | 냉장고 |
+| BigPot.glb | refs/대형솥.png | 대형 솥 (끓음 이펙트 대상) |
+| WindowBlock.glb | refs/창문 블록.png | 창문 (환기 상호작용) |
+| FireExtinguisherKR.glb | refs/소화기.png | 소화기 (한글 라벨) |
+| IngredientCrate.glb | refs/재료 상자.png | 장식 소품 |
+| PipeStraight.glb / PipeElbow.glb / PipeClamp.glb | refs/직선 파이프·ㄱ자 엘보·벽 고정쇠.png | 가스 배관 모듈 |
+| FireExtinguisher_1.glb | (텍스트 프롬프트 직접 생성) | 소화기 테스트본 |
+| RangerYellow/Blue/Pink/Red.glb | refs/~Ranger.png ×4 | **KGS 공식 캐릭터 '가스레인저'** — 주인공+스킨. 공모전 FAQ 공식 답변으로 사용 허가 확인(2026-08-18, 스크린샷 증빙 보관). 원본 일러스트를 자세 보정(나노바나나) 후 Tripo 3D 변환 |
+| BuiltinCounter.glb | refs/빌트인 선반.png | 일체형 조리대 (화구+싱크 매립) |
+| DrawerCounterLong.glb | refs/긴서랍.png | 남쪽 긴 서랍장 |
+| HoodKR.glb | refs/후드.png | 레인지 후드 ×2 |
+| WindowClosed.glb | refs/닫힌 창문.png | 창문 닫힘 상태 (환기 시 WindowOpen으로 스왑) |
+
+- 미변환 이미지: refs/체크 타일 바닥테스처.png → 바닥 머티리얼 텍스처로 사용 예정
+- 폰트: Malgun Gothic (Windows 시스템 폰트, UI 동적 로드)
+- tex_window_sky.png / mat_window_sky.mat: 창문 바깥 풍경(하늘·구름·언덕) — 코드로 절차 생성 (외부 에셋 아님)
+- UI/MainBg.png · MainKeyVisual.png · TitleLogo.png(원본 title.png 흰 배경 제거): 타이틀 화면 — Google Gemini(나노바나나) 생성, 프롬프트: `AUDIO_프롬프트.md` §1 (2026-08-25)
+- UI/MainVideo.mp4: 타이틀 키비주얼 영상 — MainKeyVisual.png를 Google Gemini(베오) 이미지→영상 변환, 프롬프트: `AUDIO_프롬프트.md` §1, 1초 지점부터 루프 재생 (2026-08-25)
+- UI/TutFace.png: 튜토리얼 교관 초상화 — refs/Red Ranger.png(KGS 공식 캐릭터, 사용 허가 확인) 머리 부분 크롭·투명화 (코드 가공)
+- Audio/sfx_*.mp3 · amb_*.mp3 (효과음 22종): ElevenLabs Sound Effects API 생성 — 유료 플랜(상업 라이선스)에서 재생성, 프롬프트: `AUDIO_프롬프트.md` §3 (2026-08-26)
+- Audio/vo_tut_0~8.wav · vo_*.wav (대사 18종): Typecast API TTS — 캐릭터 보이스 '정의로(Justice Roh)', ssfm-v30, 감정 프리셋(happy/toneup/angry) 연출 (2026-08-26). ※ 플랜 상업 사용 조건 확인 필요

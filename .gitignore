@@ -1,0 +1,32 @@
+# ===== Unity 표준 =====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+MemoryCaptures/
+Recordings/
+.vs/
+.idea/
+.utmp/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.tmp
+crashlytics-build.properties
+
+# ===== 비밀키 — 절대 커밋 금지 =====
+/tripo_key.txt
+/eleven_key.txt
+/typecast_key.txt
+Assets/Package04_Free_Kitchen/_SafeKitchen/tripo_key.txt
+Assets/Package04_Free_Kitchen/_SafeKitchen/tripo_key.txt.meta
+
+# ===== OS 잡동사니 =====
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store

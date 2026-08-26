@@ -19,6 +19,24 @@ Recordings/
 *.tmp
 crashlytics-build.properties
 
+# ===== 유니티 에셋 스토어 (재배포 불가 — EULA) =====
+Assets/Package04_Free_Kitchen/FreeKitchen/
+Assets/Package04_Free_Kitchen/FreeKitchen.meta
+Assets/JMO Assets/
+Assets/JMO Assets.meta
+Assets/Fog Particles/
+Assets/Fog Particles.meta
+Assets/Package04_Free_Kitchen/_SafeKitchen/Resources/VFX/
+Assets/Package04_Free_Kitchen/_SafeKitchen/Resources/VFX.meta
+
+# ===== 작업 잔재 (커밋 불필요) =====
+Assets/_Recovery/
+Assets/_Recovery.meta
+Assets/Models3D/ExtractedTex/
+Assets/Models3D/ExtractedTex.meta
+Assets/Package04_Free_Kitchen/_SafeKitchen/qa_*.png
+Assets/Package04_Free_Kitchen/_SafeKitchen/qa_*.png.meta
+
 # ===== 비밀키 — 절대 커밋 금지 =====
 /tripo_key.txt
 /eleven_key.txt
@@ -30,3 +48,6 @@ Assets/Package04_Free_Kitchen/_SafeKitchen/tripo_key.txt.meta
 Thumbs.db
 [Dd]esktop.ini
 .DS_Store
+
+# IDE
+*.slnx

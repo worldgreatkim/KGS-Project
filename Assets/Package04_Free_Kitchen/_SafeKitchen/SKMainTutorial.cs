@@ -297,7 +297,7 @@ public partial class SKMain
         }
         if (valvePivot != null) valvePivot.localEulerAngles = Vector3.zero;
         SKSound.VoStop();
-        if (!skipped) SKSound.Sfx("sfx_badge");
+        if (!skipped) BadgeEarn(0);   // 소방학교 수료 배지
         pnTut.SetActive(false);
         tutStep = -1;
         tutDone = true;

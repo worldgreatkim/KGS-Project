@@ -590,6 +590,7 @@ public partial class SKMain : MonoBehaviour
         crt.pivot = new Vector2(0.5f, 0f);
         crt.anchoredPosition = new Vector2(0, 16);
         titleCredit = Label(im.transform, "한국가스안전공사 「가스안전 AI 게임·영상 공모전」 — 세이프 키친", 13, new Color(0.25f, 0.30f, 0.35f, 0f));
+        BuildTitleBadges(root);   // 배지 도감 슬롯 (수집 현황)
     }
 
     void OnTitleVideoReady(VideoPlayer v)
@@ -796,6 +797,7 @@ public partial class SKMain : MonoBehaviour
             // 콤보가 쌓일수록 정답음이 높아진다 + 펀치줌
             SKSound.Sfx("sfx_correct", 1f, Mathf.Min(1.35f, 1f + 0.06f * Mathf.Min(combo, 6)));
             PunchZoom();
+            BadgeProgress();   // 점검왕·콤보 배지 진행
             Say(openEv.def.toast, 3f);
             StartCoroutine(Pop(openEv.node));
             hazards.Remove(openEv);
@@ -1476,18 +1478,19 @@ public partial class SKMain : MonoBehaviour
             quakeDone = true;
             SKSound.Vo("vo_badge_fire");
             Say("모든 불 진압 성공! ★ 화재 대응 배지 획득!", 5f);
+            BadgeEarn(1);
         }
         else
         {
             quake2Done = true;
             SKSound.Vo("vo_badge_leak");
             Say("환기 완료! 가스를 몰아냈어 ★ 누출 대응 배지 획득!", 5f);
+            BadgeEarn(2);
         }
         pbody.localScale = Vector3.one;
         pbody.localEulerAngles = new Vector3(0, pbody.localEulerAngles.y, 0);
         animState = -1;
         SKSound.StopLoop(2);
-        SKSound.Sfx("sfx_badge");
         RestoreLighting();
         if (arrowGo != null) Destroy(arrowGo);
         StartCoroutine(ReopenValve());

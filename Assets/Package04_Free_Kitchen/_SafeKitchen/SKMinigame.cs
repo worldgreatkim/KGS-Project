@@ -107,6 +107,9 @@ public partial class SKMain
         CPanel(pnMg.transform, 0, 216, 420, 42, Color.clear, out im);
         mgTitle = Label(im.transform, "밸브 잠그기!", 27, YELLOW, TextAnchor.MiddleCenter, true);
 
+        // 축 지점 P: 일러스트 몸체의 상단 스템 위치 (레버·링·바늘 공용 중심)
+        float px = -8f, py = 64f;
+
         // 절차 폴백 그림 (일러스트 이미지가 오면 자동 교체)
         mgFallback = new GameObject("fb");
         mgFallback.transform.SetParent(pnMg.transform, false);
@@ -114,45 +117,48 @@ public partial class SKMain
         frt.anchorMin = frt.anchorMax = new Vector2(0.5f, 0.5f);
         frt.anchoredPosition = Vector2.zero;
         frt.sizeDelta = Vector2.zero;
-        CPanel(mgFallback.transform, 0, 30, 384, 44, new Color(0.62f, 0.65f, 0.70f), out im);   // 배관
-        CPanel(mgFallback.transform, 0, 30, 186, 186, Color.white, out im);
+        CPanel(mgFallback.transform, px, py, 384, 44, new Color(0.62f, 0.65f, 0.70f), out im);   // 배관
+        CPanel(mgFallback.transform, px, py, 186, 186, Color.white, out im);
         im.sprite = SprCircle(128, Color.white);
         im.color = new Color(0.80f, 0.64f, 0.30f);   // 황동 몸체
-        CPanel(mgFallback.transform, 0, 30, 58, 58, Color.white, out im);
+        CPanel(mgFallback.transform, px, py, 58, 58, Color.white, out im);
         im.sprite = SprCircle(64, Color.white);
         im.color = new Color(0.35f, 0.30f, 0.18f);   // 축 너트
 
-        // 일러스트 몸체 (이미지 도착 시 활성)
-        var brt = CPanel(pnMg.transform, 0, 30, 316, 316, Color.white, out mgBodyImg);
+        // 일러스트 몸체 (이미지 도착 시 활성) — 스템이 P에 오도록 배치
+        var brt = CPanel(pnMg.transform, 0, -8, 430, 430, Color.white, out mgBodyImg);
         mgBodyImg.preserveAspect = true;
         brt.gameObject.SetActive(false);
 
         // 타이밍 링 + 바늘
-        var rrt = CPanel(pnMg.transform, 0, 30, 356, 356, Color.white, out im);
+        var rrt = CPanel(pnMg.transform, px, py, 356, 356, Color.white, out im);
         im.sprite = SprRing();
         mgRingGo = rrt.gameObject;
         mgRingGo.SetActive(false);
-        var nrt = CPanel(pnMg.transform, 0, 30, 7, 162, YELLOW, out im);
+        var nrt = CPanel(pnMg.transform, px, py, 7, 162, YELLOW, out im);
         nrt.pivot = new Vector2(0.5f, 0f);
-        nrt.anchoredPosition = new Vector2(0, 30);
+        nrt.anchoredPosition = new Vector2(px, py);
         mgNeedleRt = nrt;
         mgNeedleGo = nrt.gameObject;
         mgNeedleGo.SetActive(false);
 
-        // 레버 (축 = 밸브 중심, 0°=열림/가로 → -90°=잠김/세로)
-        var lrt = CPanel(pnMg.transform, 0, 30, 250, 56, new Color(0.85f, 0.25f, 0.22f), out mgLeverImg);
-        lrt.pivot = new Vector2(0.13f, 0.5f);
-        lrt.anchoredPosition = new Vector2(0, 30);
+        // 레버 (축 구멍이 P에 걸림, 0°=열림/가로 → -90°=잠김/세로)
+        var lrt = CPanel(pnMg.transform, px, py, 280, 86, new Color(0.85f, 0.25f, 0.22f), out mgLeverImg);
+        lrt.pivot = new Vector2(0.14f, 0.55f);
+        lrt.anchoredPosition = new Vector2(px, py);
         mgLeverRt = lrt;
 
         // 게이지
-        CPanel(pnMg.transform, 0, -186, 344, 26, new Color(1, 1, 1, 0.20f), out im);
-        mgFillRt = CPanel(pnMg.transform, -170, -186, 10, 18, MINT, out mgGaugeFill);
+        CPanel(pnMg.transform, 0, -176, 344, 26, new Color(1, 1, 1, 0.20f), out im);
+        mgFillRt = CPanel(pnMg.transform, -170, -176, 10, 18, MINT, out mgGaugeFill);
         mgFillRt.pivot = new Vector2(0f, 0.5f);
-        mgFillRt.anchoredPosition = new Vector2(-170, -186);
+        mgFillRt.anchoredPosition = new Vector2(-170, -176);
 
-        CPanel(pnMg.transform, 0, -222, 700, 34, Color.clear, out im);
-        mgHint = Label(im.transform, "", 21, Color.white, TextAnchor.MiddleCenter, true);
+        CPanel(pnMg.transform, 0, -204, 460, 32, Color.clear, out im);
+        mgHint = Label(im.transform, "", 20, Color.white, TextAnchor.MiddleCenter, true);
+        // 타이밍 링·바늘은 레버 위에 그려 초록 구간이 가려지지 않게
+        mgRingGo.transform.SetAsLastSibling();
+        mgNeedleGo.transform.SetAsLastSibling();
         pnMg.SetActive(false);
     }
 

@@ -45,3 +45,7 @@
 - UI/TutFace.png: 튜토리얼 교관 초상화 — refs/Red Ranger.png(KGS 공식 캐릭터, 사용 허가 확인) 머리 부분 크롭·투명화 (코드 가공)
 - Audio/sfx_*.mp3 · amb_*.mp3 (효과음 22종): ElevenLabs Sound Effects API 생성 — 유료 플랜(상업 라이선스)에서 재생성, 프롬프트: `AUDIO_프롬프트.md` §3 (2026-08-26)
 - Audio/vo_tut_0~8.wav · vo_*.wav (대사 18종): Typecast API TTS — 캐릭터 보이스 '정의로(Justice Roh)', ssfm-v30, 감정 프리셋(happy/toneup/angry) 연출 (2026-08-26). ※ 플랜 상업 사용 조건 확인 필요
+- Audio/sfx_rumble.mp3 (지진 예고 럼블): ElevenLabs SFX 추가 생성 (2026-08-27)
+- Audio/vo_tut_6·7.wav 재생성(쓸기 분사·밸브 연타 조작 반영) · vo_badge_all.wav (퍼펙트 배지): Typecast '정의로' (2026-08-27)
+- UI/ValveCloseupBody.png · ValveCloseupLever.png: 밸브 잠금 미니게임 클로즈업 일러스트 — Google Gemini(나노바나나) 생성, 프롬프트: 2026-08-27 대화 기록, 흰 배경 제거·트림은 SKImgTool(자체 코드) 처리. ※ 몸체에 'KGS 가스' 각인 문구 포함(생성 결과) — 공식 CI 로고 아님
+- UI/BadgeTut·BadgeFire·BadgeLeak·BadgeCheck·BadgeCombo·BadgePerfect.png (배지 6종): Google Gemini(나노바나나) 생성 + SKImgTool 투명화 (2026-08-27)

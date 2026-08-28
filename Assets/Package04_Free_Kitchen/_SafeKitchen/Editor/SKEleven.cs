@@ -15,7 +15,7 @@ public static class SKEleven
         {
             if (_key == null)
             {
-                var p = @"C:\Users\edwin\OneDrive\Desktop\GasProject\eleven_key.txt";
+                var p = System.IO.Path.GetFullPath("eleven_key.txt");   // 프로젝트 루트
                 _key = System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p).Trim() : "";
                 if (_key == "") UnityEngine.Debug.LogWarning("[SKEleven] eleven_key.txt 없음");
             }

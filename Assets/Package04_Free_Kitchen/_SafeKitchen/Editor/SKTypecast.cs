@@ -15,7 +15,8 @@ public static class SKTypecast
         {
             if (_key == null)
             {
-                var p = @"C:\Users\edwin\OneDrive\Desktop\GasProject\typecast_key.txt";
+                // 프로젝트 루트 기준 상대 경로 (에디터 CWD = 프로젝트 루트) — 폴더 이동에 안전
+                var p = System.IO.Path.GetFullPath("typecast_key.txt");
                 _key = System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p).Trim() : "";
             }
             return _key;

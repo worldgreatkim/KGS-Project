@@ -14,7 +14,7 @@ public static class SKTripo
         {
             if (_key == null)
             {
-                var p = @"C:\Users\edwin\OneDrive\Desktop\GasProject\tripo_key.txt";
+                var p = System.IO.Path.GetFullPath("tripo_key.txt");   // 프로젝트 루트
                 _key = System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p).Trim() : "";
                 if (_key == "") UnityEngine.Debug.LogWarning("[SKTripo] tripo_key.txt 없음 — API 호출 불가");
             }
@@ -23,7 +23,7 @@ public static class SKTripo
     }
     const string API = "https://api.tripo3d.ai/v2/openapi";
     const string API3 = "https://openapi.tripo3d.ai/v3";
-    public const string REFS = @"C:\Users\edwin\OneDrive\Desktop\GasProject\Assets\Package04_Free_Kitchen\_SafeKitchen\refs\";
+    public const string REFS = @"Assets\Package04_Free_Kitchen\_SafeKitchen\refs\";   // 프로젝트 루트 기준
 
     static HttpClient _c;
     static HttpClient C

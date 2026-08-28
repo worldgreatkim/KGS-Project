@@ -103,6 +103,7 @@ public partial class SKMain
         }
         BuildFpWalls();
         BuildStationLabels();
+        BuildOuterDeco();
         // 기본 시점: 확장맵(_FP 씬)=1인칭, 원본 씬=쿼터뷰 (V로 언제든 전환)
         if (bigMap && PlayerPrefs.GetInt("skfp", 1) == 1) SetFp(true);
     }
@@ -265,6 +266,21 @@ public partial class SKMain
         FpPanel("fp_wall_e", new Vector3(fb.max.x + 0.18f, 1.62f, cz), new Vector3(0.25f, 3.3f, fb.size.z + 1.0f), wallC);
         FpPanel("fp_ceiling", new Vector3(cx, 3.3f, cz), new Vector3(fb.size.x + 1.2f, 0.2f, fb.size.z + 1.2f), ceilC);
         fpWalls.SetActive(false);
+    }
+
+    /// 방 바깥 데코: 어두운 우드 마루 + 통일된 배경색 — 쿼터뷰 화면 가장자리의 파란 허공 제거 (양 씬 상시)
+    void BuildOuterDeco()
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        Object.Destroy(go.GetComponent<Collider>());
+        go.name = "outer_floor";
+        go.transform.position = new Vector3(roomW * 0.5f, -0.06f, roomD * 0.5f);
+        go.transform.localScale = new Vector3(140f, 0.1f, 140f);
+        var mr = go.GetComponent<Renderer>();
+        mr.material = Lit(new Color(0.33f, 0.25f, 0.18f));   // 어두운 우드 마루
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        // 카메라 배경도 마루보다 짙은 톤으로 (허공이 보여도 이질감 없게)
+        cam.backgroundColor = new Color(0.16f, 0.13f, 0.10f);
     }
 
     void FpPanel(string name, Vector3 pos, Vector3 scale, Color col)

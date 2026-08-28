@@ -786,6 +786,7 @@ public partial class SKMain : MonoBehaviour
         }
         dim.SetActive(true);
         pnChoice.SetActive(true);
+        if (TutActive && pnTut != null) pnTut.SetActive(false);   // 칠판과 대화창 겹침 방지
         Time.timeScale = 0f;   // 애들이 천천히 읽도록 일시정지 (타이머·위험도 정지)
         StartCoroutine(PopInPanel(pnChoice.transform));
         SKSound.Sfx("sfx_popup", 0.7f);
@@ -812,6 +813,7 @@ public partial class SKMain : MonoBehaviour
         openEv = null;
         dim.SetActive(false);
         pnChoice.SetActive(false);
+        if (TutActive && pnTut != null) pnTut.SetActive(true);   // 대화창 복원
         Time.timeScale = 1f;   // 일시정지 해제
     }
 
@@ -1581,6 +1583,7 @@ public partial class SKMain : MonoBehaviour
         }
         dim.SetActive(true);
         pnChoice.SetActive(true);
+        if (TutActive && pnTut != null) pnTut.SetActive(false);
         Time.timeScale = 0f;
         StartCoroutine(PopInPanel(pnChoice.transform));
         SKSound.Sfx("sfx_popup", 0.7f);
@@ -1594,6 +1597,7 @@ public partial class SKMain : MonoBehaviour
             quizSolved = true;
             dim.SetActive(false);
             pnChoice.SetActive(false);
+            if (TutActive && pnTut != null) pnTut.SetActive(true);
             Time.timeScale = 1f;
             score += 100;
             AddFloat(player.position + new Vector3(0, 1.4f, 0), "+100 정답!");

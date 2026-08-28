@@ -720,7 +720,7 @@ public partial class SKMain : MonoBehaviour
         {
             var p = hz.node.transform.position;
             float d = new Vector2(player.position.x - p.x, player.position.z - p.z).magnitude;
-            if (d < hz.reach && d < bd) { bd = d; best = hz; }
+            if (d < hz.reach && d < bd && FacingPoint(p, 62f)) { bd = d; best = hz; }
         }
         return best;
     }
@@ -874,7 +874,7 @@ public partial class SKMain : MonoBehaviour
         windowCo = null;
     }
 
-    /// 가장 가까운 소화기 (들고 있는 것 제외)
+    /// 가장 가까운 소화기 (들고 있는 것 제외, FP에선 바라보는 것만)
     Transform NearestExt()
     {
         Transform best = null;
@@ -883,7 +883,7 @@ public partial class SKMain : MonoBehaviour
         {
             if (e == null || e == carryExt) continue;
             float d = new Vector2(player.position.x - e.position.x, player.position.z - e.position.z).magnitude;
-            if (d < bd) { bd = d; best = e; }
+            if (d < bd && FacingPoint(e.position, 62f)) { bd = d; best = e; }
         }
         return best;
     }
@@ -1061,7 +1061,8 @@ public partial class SKMain : MonoBehaviour
     {
         if (valvePivot == null) return false;
         var p = valvePivot.position;
-        return new Vector2(player.position.x - p.x, player.position.z - (p.z + 0.7f)).magnitude < 1.7f;
+        return new Vector2(player.position.x - p.x, player.position.z - (p.z + 0.7f)).magnitude < 1.7f
+            && FacingPoint(p, 75f);
     }
 
     void QuakeUpdate(float dt)
@@ -1328,7 +1329,8 @@ public partial class SKMain : MonoBehaviour
     {
         if (windowClosed == null) return false;
         var c = RB(qWindowOpen && windowOpen != null ? windowOpen : windowClosed).center;
-        return new Vector2(player.position.x - c.x, player.position.z - (c.z + 0.8f)).magnitude < 1.9f;
+        return new Vector2(player.position.x - c.x, player.position.z - (c.z + 0.8f)).magnitude < 1.9f
+            && FacingPoint(c, 75f);
     }
 
     Vector3 WindowAim()
@@ -1875,10 +1877,11 @@ public partial class SKMain : MonoBehaviour
             pbody.localEulerAngles = be;
         }
 
-        // 미니게임·분사·조준 부채꼴
+        // 미니게임·분사·조준 부채꼴·월드 라벨
         if (mgOpen) MgUpdate(dt);
         SprayUpdate(dt);
         UpdateAimCone();
+        FpWorldUpdate();
 
         // 끓는 수면
         if (boilFoam != null)

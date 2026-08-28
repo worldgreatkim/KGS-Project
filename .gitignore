@@ -56,3 +56,6 @@ Thumbs.db
 *.slnx
 /mig_log.txt
 /fin_log.txt
+/diag_*.png
+/*.jpg
+/diag.png

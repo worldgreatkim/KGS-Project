@@ -49,3 +49,4 @@
 - Audio/vo_tut_6·7.wav 재생성(쓸기 분사·밸브 연타 조작 반영) · vo_badge_all.wav (퍼펙트 배지): Typecast '정의로' (2026-08-27)
 - UI/ValveCloseupBody.png · ValveCloseupLever.png: 밸브 잠금 미니게임 클로즈업 일러스트 — Google Gemini(나노바나나) 생성, 프롬프트: 2026-08-27 대화 기록, 흰 배경 제거·트림은 SKImgTool(자체 코드) 처리. ※ 몸체에 'KGS 가스' 각인 문구 포함(생성 결과) — 공식 CI 로고 아님
 - UI/BadgeTut·BadgeFire·BadgeLeak·BadgeCheck·BadgeCombo·BadgePerfect.png (배지 6종): Google Gemini(나노바나나) 생성 + SKImgTool 투명화 (2026-08-27)
+- Models3D/Mod_Counter·Mod_Stove·Mod_Sink·Mod_Corner·Mod_Wall.glb (모듈 킷 5종): Gemini 이미지(기준 유닛 파생 방식, refs/Mod_*.png) → Tripo image-to-model (2026-08-30). SafeKitchen3D_MOD 씬 그리드 조립용 — 스토어 가구 대체

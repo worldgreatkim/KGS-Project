@@ -54,3 +54,5 @@ Thumbs.db
 
 # IDE
 *.slnx
+/mig_log.txt
+/fin_log.txt

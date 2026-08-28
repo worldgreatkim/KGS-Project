@@ -10,11 +10,14 @@ public partial class SKMain
     // ---- 씬(맵 버전) 자동 감지: 원본 19.2×10.8 vs 확장 24×15.8 ----
     bool bigMap;                 // SafeKitchen3D_FP(확장맵)이면 true
     float roomW, roomD;          // 이동 클램프 경계 (맵 버전별)
+    Vector3 fbCenter, fbSize;    // 바닥 실측 (원근 쿼터뷰 프레이밍용)
 
     /// Awake 최상단 호출 — 바닥 크기로 맵 버전 판정
     void DetectMap()
     {
         bigMap = false;
+        fbCenter = new Vector3(SKData.RW * 0.5f, 0, SKData.RD * 0.5f);
+        fbSize = new Vector3(SKData.RW, 0.1f, SKData.RD);
         var room = GameObject.Find("Room");
         if (room != null)
         {
@@ -27,11 +30,35 @@ public partial class SKMain
                     var b = rs[0].bounds;
                     foreach (var r in rs) b.Encapsulate(r.bounds);
                     bigMap = b.max.x > 22f;
+                    fbCenter = b.center;
+                    fbSize = b.size;
                 }
             }
         }
         roomW = bigMap ? 25.0f : 19.2f;
         roomD = bigMap ? 15.7f : 10.8f;
+    }
+
+    // ---- 오버쿡드식 원근 쿼터뷰 (직교 대체) ----
+    const bool QV_PERSP = true;      // false로 되돌리면 씬의 직교 카메라 그대로 사용 (롤백 스위치)
+    const float QV_PITCH = 52f;
+    const float QV_FOV = 38f;
+    float qvFov;                     // 복귀용
+
+    /// 바닥 실측 + 화면비로 방 전체가 담기는 원근 카메라 배치
+    void SetupQvCamera()
+    {
+        cam.orthographic = false;
+        cam.fieldOfView = QV_FOV;
+        float vHalf = QV_FOV * 0.5f * Mathf.Deg2Rad;
+        float hHalf = Mathf.Atan(Mathf.Tan(vHalf) * cam.aspect);
+        float rad = QV_PITCH * Mathf.Deg2Rad;
+        float Lw = (fbSize.x * 0.5f + 1.4f) / Mathf.Tan(hHalf);                       // 가로 맞춤
+        float Ld = (fbSize.z * 0.5f + 2.0f) * Mathf.Sin(rad) / Mathf.Tan(vHalf);      // 세로(투영) 맞춤
+        float L = Mathf.Max(Lw, Ld);
+        var c = new Vector3(fbCenter.x, 0, fbCenter.z);
+        cam.transform.position = c + new Vector3(0, Mathf.Sin(rad), Mathf.Cos(rad)) * L;
+        cam.transform.rotation = Quaternion.Euler(QV_PITCH, 180f, 0);
     }
 
     /// 맵 버전별 위험 좌표
@@ -62,10 +89,12 @@ public partial class SKMain
     /// Awake 말미 호출
     void FpInit()
     {
+        if (QV_PERSP) SetupQvCamera();   // 쿼터뷰를 원근으로 재구성 (씬 카메라값 대체)
         qvCamPos = cam.transform.position;
         qvCamRot = cam.transform.rotation;
         qvOrtho = cam.orthographic;
         qvOrthoSize = cam.orthographicSize;
+        qvFov = cam.fieldOfView;
         // 크로스헤어 점
         var go = new GameObject("fp_dot");
         go.transform.SetParent(canvas.transform, false);
@@ -129,7 +158,9 @@ public partial class SKMain
         {
             cam.orthographic = qvOrtho;
             cam.orthographicSize = qvOrthoSize;
+            cam.fieldOfView = qvFov;
             camOrtho0 = qvOrthoSize;  // 펀치줌 기준 갱신
+            camFov0 = qvFov;
             cam.transform.SetPositionAndRotation(qvCamPos, qvCamRot);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

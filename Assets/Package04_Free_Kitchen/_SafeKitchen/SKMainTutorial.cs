@@ -148,12 +148,12 @@ public partial class SKMain
         if (arrowGo != null) Destroy(arrowGo);
         if (gate == TG_MOVE)
         {
-            tutTarget = new Vector3(10.6f, 0, 5.6f);
+            tutTarget = new Vector3(10.6f, 0, 10.6f);
             MakeArrow(tutTarget + new Vector3(0, 1.9f, 0));
         }
         else if (gate == TG_SPRINT)
         {
-            tutTarget = new Vector3(4.2f, 0, 8.0f);
+            tutTarget = new Vector3(4.2f, 0, 13.0f);
             MakeArrow(tutTarget + new Vector3(0, 1.9f, 0));
         }
         else if (gate == TG_HAZARD)
@@ -172,7 +172,7 @@ public partial class SKMain
                 tutFireLit = true;
                 DimLighting();   // 훈련 화재 동안 화면 어둡게 → 불꽃이 또렷하게
                 tutDimmed = true;
-                MakeFire(new Vector3(8.6f, 1.62f, 5.6f));   // 대피 탁자 위 연습 불 (상판에 안 묻히게 띄움)
+                MakeFire(new Vector3(8.6f, 1.62f, 10.6f));   // 대피 탁자 위 연습 불 (상판에 안 묻히게 띄움)
                 SKSound.Sfx("sfx_fire_start");
                 SKSound.Loop(2, "amb_fire", 0.5f);
             }

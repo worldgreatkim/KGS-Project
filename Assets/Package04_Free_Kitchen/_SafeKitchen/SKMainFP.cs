@@ -12,12 +12,12 @@ public partial class SKMain
     float fpShakeAmp;                 // 지진·타격 셰이크 (FP 전용, 감쇠)
     Vector3 qvCamPos; Quaternion qvCamRot;   // 쿼터뷰 원래 카메라 (복귀용)
     bool qvOrtho; float qvOrthoSize;         // 쿼터뷰 투영 설정 (직교) — FP는 원근으로 전환
-    const float FP_FOV = 62f;
+    const float FP_FOV = 68f;   // 넓은 시야 — 맵이 한눈에 들어오게
     GameObject fpDot;                 // 크로스헤어 점
     Text fpHint;                      // [V] 시점 안내
     GameObject fpWalls;               // FP 전용 남쪽 벽+천장 (쿼터뷰에선 숨김)
     const float FP_SENS = 3.0f;
-    const float FP_HEAD = 1.42f;
+    const float FP_HEAD = 1.68f;   // 성인 눈높이 (어린이 시점 느낌 제거)
 
     // 스테이션 월드 라벨
     class StLabel { public GameObject go; public TextMesh tm; public Transform follow; public Vector3 offset; public Transform ext; }
@@ -299,7 +299,11 @@ public partial class SKMain
             if (l.go.activeSelf != vis) l.go.SetActive(vis);
             if (!vis) continue;
             if (l.follow != null) l.go.transform.position = l.follow.position + l.offset;
-            l.go.transform.rotation = cam.transform.rotation;
+            // 카메라를 정면으로 향하게 (거울 반전 방지, 롤 0 고정)
+            var toCam = l.go.transform.position - cam.transform.position;
+            toCam.y = 0;
+            if (toCam.sqrMagnitude > 0.01f)
+                l.go.transform.rotation = Quaternion.LookRotation(toCam);
         }
         // 시야 밖 위험 화살표 (FP 전용)
         int used = 0;

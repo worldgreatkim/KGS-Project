@@ -30,20 +30,20 @@ public static class SKData
     public const int BASE_PTS = 100;
     public const int RETRY_PTS = 40;
 
-    // ---- 방 크기 (Godot과 동일: 19.2 x 10.8m) ----
-    public const float RW = 19.2f;
-    public const float RD = 10.8f;
+    // ---- 방 크기 (2026-08-29 확장: 24×15.8m — 바닥 x 1.1~25.1, z 0~15.8) ----
+    public const float RW = 25.0f;
+    public const float RD = 15.7f;
 
-    // ---- 위험 발생 위치 ----
+    // ---- 위험 발생 위치 (확장 맵 기준 — 소속 가구 이동량 상속) ----
     public static readonly Dictionary<string, Vector3> HZ = new Dictionary<string, Vector3>
     {
-        {"boil",   new Vector3(16.4f, 1.65f, 2.0f)},
+        {"boil",   new Vector3(21.2f, 1.65f, 2.0f)},
         {"yellow", new Vector3(9.1f, 1.65f, 2.0f)},
-        {"hood",   new Vector3(16.1f, 2.35f, 1.6f)},
-        {"towel",  new Vector3(15.4f, 1.4f, 0.85f)},
-        {"oil",    new Vector3(4.8f,  1.5f,  8.9f)},
-        {"hose",   new Vector3(7.6f,  1.5f,  9.0f)},
-        {"butane", new Vector3(11.2f, 1.5f,  8.9f)},
+        {"hood",   new Vector3(20.9f, 2.35f, 1.6f)},
+        {"towel",  new Vector3(20.2f, 1.4f, 0.85f)},
+        {"oil",    new Vector3(4.8f,  1.5f,  13.9f)},
+        {"hose",   new Vector3(7.6f,  1.5f,  14.0f)},
+        {"butane", new Vector3(11.2f, 1.5f,  13.9f)},
         {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
     };
 

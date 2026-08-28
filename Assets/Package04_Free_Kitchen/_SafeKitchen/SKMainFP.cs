@@ -11,6 +11,8 @@ public partial class SKMain
     float fpYaw, fpPitch;
     float fpShakeAmp;                 // 지진·타격 셰이크 (FP 전용, 감쇠)
     Vector3 qvCamPos; Quaternion qvCamRot;   // 쿼터뷰 원래 카메라 (복귀용)
+    bool qvOrtho; float qvOrthoSize;         // 쿼터뷰 투영 설정 (직교) — FP는 원근으로 전환
+    const float FP_FOV = 62f;
     GameObject fpDot;                 // 크로스헤어 점
     Text fpHint;                      // [V] 시점 안내
     GameObject fpWalls;               // FP 전용 남쪽 벽+천장 (쿼터뷰에선 숨김)
@@ -29,6 +31,8 @@ public partial class SKMain
     {
         qvCamPos = cam.transform.position;
         qvCamRot = cam.transform.rotation;
+        qvOrtho = cam.orthographic;
+        qvOrthoSize = cam.orthographicSize;
         // 크로스헤어 점
         var go = new GameObject("fp_dot");
         go.transform.SetParent(canvas.transform, false);
@@ -82,9 +86,16 @@ public partial class SKMain
             fpYaw = pbody.eulerAngles.y;
             fpPitch = 8f;
             fpShakeAmp = 0f;
+            // 1인칭은 원근 투영 (쿼터뷰는 직교라 그대로 두면 납작한 띠로 보임)
+            cam.orthographic = false;
+            cam.fieldOfView = FP_FOV;
+            camFov0 = FP_FOV;         // 펀치줌 기준 갱신
         }
         else
         {
+            cam.orthographic = qvOrtho;
+            cam.orthographicSize = qvOrthoSize;
+            camOrtho0 = qvOrthoSize;  // 펀치줌 기준 갱신
             cam.transform.SetPositionAndRotation(qvCamPos, qvCamRot);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

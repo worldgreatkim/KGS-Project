@@ -302,6 +302,16 @@ public partial class SKMain
     /// 방 바깥 데코: 어두운 우드 마루 + 통일된 배경색 — 쿼터뷰 화면 가장자리의 파란 허공 제거 (양 씬 상시)
     void BuildOuterDeco()
     {
+        // 바닥 체크 타일 확대 (오버쿡드 스케일 — 잔타일이 원근에서 노이즈처럼 보이는 것 해소)
+        var room0 = GameObject.Find("Room");
+        if (room0 != null)
+        {
+            var ft0 = room0.transform.Find("floor");
+            if (ft0 != null)
+                foreach (var r in ft0.GetComponentsInChildren<Renderer>())
+                    if (r.material != null && r.material.mainTexture != null)
+                        r.material.mainTextureScale = r.material.mainTextureScale * 0.45f;
+        }
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         Object.Destroy(go.GetComponent<Collider>());
         go.name = "outer_floor";

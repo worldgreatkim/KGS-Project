@@ -223,7 +223,7 @@ public partial class SKMain : MonoBehaviour
         SKSound.Init(gameObject);
         SKSound.Loop(0, "amb_boil", 0.30f);
         SKSound.Loop(1, "amb_flame", 0.18f);
-        Say("Unity 3D 데모 — 위험에 다가가 스페이스!", 4f);
+        // (부팅 안내는 타이틀·튜토리얼이 담당 — 대화창과 겹치는 토스트 제거)
     }
 
     static Font LoadFont()
@@ -634,8 +634,7 @@ public partial class SKMain : MonoBehaviour
         pnCombo.SetActive(false);
         Panel(root, 20, 64, 150, 38, new Color(1, 1, 1, 0.85f), out im);
         uiAcha = Label(im.transform, "아차 0", 18, new Color(0.54f, 0.59f, 0.65f));
-        Panel(root, 240, 690, 800, 22, Color.clear, out im);
-        Label(im.transform, "Unity 3D 데모 — 주방 배치는 에디터에서 자유 수정", 14, new Color(1, 1, 1, 0.5f));
+        // (하단 개발용 안내 문구 제거 — 제출용 화면 정리)
 
         // ---------- 안전 퀴즈: 오버쿡드 칠판 스타일 (일시정지 + 강딤 + 칠판 패널) ----------
         var dr = Panel(root, 0, 0, 1280, 720, new Color(0.02f, 0.03f, 0.05f, 0.78f), out im);
@@ -2013,6 +2012,10 @@ public partial class SKMain : MonoBehaviour
 
         pnToast.SetActive(msgT > 0 && msg != "");
         if (msgT > 0) uiToast.text = msg;
+        // 튜토리얼 대화창이 하단을 차지할 땐 토스트를 상단으로 (겹침 방지)
+        var toastRt = pnToast.GetComponent<RectTransform>();
+        toastRt.anchoredPosition = (TutActive && pnTut != null && pnTut.activeSelf)
+            ? new Vector2(280, -96) : new Vector2(280, -620);
 
         // 프롬프트 (지진 중엔 밸브 안내로 전환)
         bool showPrompt;

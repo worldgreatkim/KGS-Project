@@ -47,6 +47,19 @@ public static class SKData
         {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
     };
 
+    // ---- 위험 위치 (원본 맵 19.2×10.8 — SafeKitchen3D.unity 쿼터뷰 씬용) ----
+    public static readonly Dictionary<string, Vector3> HZ_OLD = new Dictionary<string, Vector3>
+    {
+        {"boil",   new Vector3(16.4f, 1.65f, 2.0f)},
+        {"yellow", new Vector3(9.1f, 1.65f, 2.0f)},
+        {"hood",   new Vector3(16.1f, 2.35f, 1.6f)},
+        {"towel",  new Vector3(15.4f, 1.4f, 0.85f)},
+        {"oil",    new Vector3(4.8f,  1.5f,  8.9f)},
+        {"hose",   new Vector3(7.6f,  1.5f,  9.0f)},
+        {"butane", new Vector3(11.2f, 1.5f,  8.9f)},
+        {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
+    };
+
     // ---- 위험 이벤트 (주방 8종) ----
     public static readonly Dictionary<string, Ev> EV = new Dictionary<string, Ev>
     {

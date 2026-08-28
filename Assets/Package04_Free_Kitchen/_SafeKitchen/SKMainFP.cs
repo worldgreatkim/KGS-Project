@@ -7,6 +7,39 @@ using UnityEngine.UI;
 /// + 소화기 뷰모델 + FP 전용 남쪽 벽·천장 + 대피 숙이기 카메라
 public partial class SKMain
 {
+    // ---- 씬(맵 버전) 자동 감지: 원본 19.2×10.8 vs 확장 24×15.8 ----
+    bool bigMap;                 // SafeKitchen3D_FP(확장맵)이면 true
+    float roomW, roomD;          // 이동 클램프 경계 (맵 버전별)
+
+    /// Awake 최상단 호출 — 바닥 크기로 맵 버전 판정
+    void DetectMap()
+    {
+        bigMap = false;
+        var room = GameObject.Find("Room");
+        if (room != null)
+        {
+            var ft = room.transform.Find("floor");
+            if (ft != null)
+            {
+                var rs = ft.GetComponentsInChildren<Renderer>();
+                if (rs.Length > 0)
+                {
+                    var b = rs[0].bounds;
+                    foreach (var r in rs) b.Encapsulate(r.bounds);
+                    bigMap = b.max.x > 22f;
+                }
+            }
+        }
+        roomW = bigMap ? 25.0f : 19.2f;
+        roomD = bigMap ? 15.7f : 10.8f;
+    }
+
+    /// 맵 버전별 위험 좌표
+    Vector3 HzPos(string key) { return bigMap ? SKData.HZ[key] : SKData.HZ_OLD[key]; }
+    /// 맵 버전별 좌표·수치 선택 (o=원본, n=확장)
+    Vector3 Pz(Vector3 o, Vector3 n) { return bigMap ? n : o; }
+    float Pf(float o, float n) { return bigMap ? n : o; }
+
     bool fpMode;
     float fpYaw, fpPitch;
     float fpShakeAmp;                 // 지진·타격 셰이크 (FP 전용, 감쇠)
@@ -70,8 +103,8 @@ public partial class SKMain
         }
         BuildFpWalls();
         BuildStationLabels();
-        // 기본 = 1인칭 (V로 쿼터뷰 전환)
-        if (PlayerPrefs.GetInt("skfp", 1) == 1) SetFp(true);
+        // 기본 시점: 확장맵(_FP 씬)=1인칭, 원본 씬=쿼터뷰 (V로 언제든 전환)
+        if (bigMap && PlayerPrefs.GetInt("skfp", 1) == 1) SetFp(true);
     }
 
     void ToggleFp() { SetFp(!fpMode); }
@@ -170,9 +203,9 @@ public partial class SKMain
         dir.y = 0;
         dir.Normalize();
         var p = player.position;
-        float nx = Mathf.Clamp(p.x + dir.x * spd * dt, 0.6f, SKData.RW - 0.6f);
+        float nx = Mathf.Clamp(p.x + dir.x * spd * dt, 0.6f, roomW - 0.6f);
         if (!Blocked(new Vector3(nx, 0, p.z))) p.x = nx;
-        float nz = Mathf.Clamp(p.z + dir.z * spd * dt, 0.6f, SKData.RD - 0.6f);
+        float nz = Mathf.Clamp(p.z + dir.z * spd * dt, 0.6f, roomD - 0.6f);
         if (!Blocked(new Vector3(p.x, 0, nz))) p.z = nz;
         player.position = p;
         wasSprinting = sprinting;

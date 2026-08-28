@@ -169,6 +169,7 @@ public partial class SKMain : MonoBehaviour
     void Awake()
     {
         cam = Camera.main;
+        DetectMap();   // 씬(맵 버전) 판정 — 좌표·시점 분기의 기준
         font = LoadFont();
         BuildPlayer();
         BuildUI();
@@ -184,7 +185,7 @@ public partial class SKMain : MonoBehaviour
             }
             else boilPos = stv.position;   // 빈 앵커 노드(StoveAnchor)면 그 위치 그대로
         }
-        else boilPos = new Vector3(16.15f, 1.85f, 1.9f);
+        else boilPos = Pz(new Vector3(11.35f, 1.85f, 1.9f), new Vector3(16.15f, 1.85f, 1.9f));
         BuildBoilFx(boilPos);
         var vp = GameObject.Find("valve_pivot");
         if (vp != null) valvePivot = vp.transform;
@@ -211,7 +212,7 @@ public partial class SKMain : MonoBehaviour
                 if (t.name.Contains("FireExtinguisher")) extList.Add(t);
         // 화구 불꽃: 냄비 아래 + 빈 화구 (yellow 위험이 이 화구를 노랗게 만든다)
         BuildFlame(0, new Vector3(boilPos.x, 1.28f, boilPos.z - 0.05f));
-        BuildFlame(1, new Vector3(SKData.HZ["yellow"].x, 1.28f, 1.9f));
+        BuildFlame(1, new Vector3(HzPos("yellow").x, 1.28f, 1.9f));
         SetFlame(0, false);
         SetFlame(1, false);
         BuildTitle();
@@ -279,7 +280,7 @@ public partial class SKMain : MonoBehaviour
     {
         var root = new GameObject("Player");
         player = root.transform;
-        player.position = new Vector3(12f, 0f, 8.5f);
+        player.position = Pz(new Vector3(6f, 0f, 6.2f), new Vector3(12f, 0f, 8.5f));
         pbody = new GameObject("Body").transform;
         pbody.SetParent(player, false);
 
@@ -738,7 +739,7 @@ public partial class SKMain : MonoBehaviour
         if (cand.Count == 0) return;
         string type = cand[Random.Range(0, cand.Count)];
         var def = SKData.EV[type];
-        Vector3 at = SKData.HZ[type];
+        Vector3 at = HzPos(type);
         float reach = SKData.INTERACT_D;
         // 가스 누출(비눗물 점검)은 실제 가스밸브 위치에서 상호작용
         // 밸브가 벽 위(y≈1.9)라 ?가 화면 밖으로 안 나가게 살짝 아래·앞에 띄운다
@@ -987,10 +988,10 @@ public partial class SKMain : MonoBehaviour
             foreach (var r in rs) b.Encapsulate(r.bounds);
             shelterPos = new Vector3(b.center.x, 0, b.center.z);
         }
-        else shelterPos = new Vector3(8.6f, 0, 10.6f);
+        else shelterPos = Pz(new Vector3(8.6f, 0, 5.6f), new Vector3(8.6f, 0, 10.6f));
         MakeArrow(shelterPos + new Vector3(0, 1.9f, 0));
         var dgo = new GameObject("quake_dust");
-        dgo.transform.position = new Vector3(13.1f, 2.8f, 7.9f);
+        dgo.transform.position = Pz(new Vector3(9.6f, 2.8f, 5.4f), new Vector3(13.1f, 2.8f, 7.9f));
         dustPs = dgo.AddComponent<ParticleSystem>();
         var dm = dustPs.main;
         dm.startLifetime = 1.6f;
@@ -1001,7 +1002,7 @@ public partial class SKMain : MonoBehaviour
         var de = dustPs.emission; de.rateOverTime = 60f;
         var ds = dustPs.shape;
         ds.shapeType = ParticleSystemShapeType.Box;
-        ds.scale = new Vector3(22f, 0.1f, 14f);
+        ds.scale = Pz(new Vector3(17f, 0.1f, 9f), new Vector3(22f, 0.1f, 14f));
         dgo.GetComponent<ParticleSystemRenderer>().material = Flat(new Color(0.75f, 0.7f, 0.62f, 0.6f));
         DimLighting();
     }
@@ -1198,8 +1199,8 @@ public partial class SKMain : MonoBehaviour
     {
         var cands = new List<Vector3>
         {
-            new Vector3(SKData.HZ["yellow"].x, 1.3f, 1.9f),
-            new Vector3(SKData.HZ["boil"].x, 1.3f, 1.9f),
+            new Vector3(HzPos("yellow").x, 1.3f, 1.9f),
+            new Vector3(HzPos("boil").x, 1.3f, 1.9f),
         };
         var kroot = GameObject.Find("Kitchen");
         if (kroot != null)
@@ -1214,7 +1215,7 @@ public partial class SKMain : MonoBehaviour
                 cands.Add(new Vector3(b.center.x, b.max.y + 0.42f, b.center.z));
                 if (cands.Count >= 4) break;
             }
-        while (cands.Count < 4) cands.Add(new Vector3(6.3f + cands.Count * 2.5f, 1.35f, 14.0f));
+        while (cands.Count < 4) cands.Add(new Vector3(6.3f + cands.Count * 2.5f, 1.35f, Pf(9.0f, 14.0f)));
         for (int i = cands.Count - 1; i > 0; i--)
         { int j = Random.Range(0, i + 1); var tmp = cands[i]; cands[i] = cands[j]; cands[j] = tmp; }
         for (int i = 0; i < 3; i++) MakeFire(cands[i]);
@@ -1305,7 +1306,7 @@ public partial class SKMain : MonoBehaviour
         if (valvePivot != null) StartCoroutine(TurnValve(90f));
         KillStoveFlames();
         score += 150;
-        AddFloat(new Vector3(17.4f, 1.6f, 0.8f), "+150 가스 차단!");
+        AddFloat(Pz(new Vector3(12.6f, 1.6f, 0.8f), new Vector3(17.4f, 1.6f, 0.8f)), "+150 가스 차단!");
         StartFires();
         SKSound.Vo("vo_fires");
         Say("가스는 잠갔어! 앗, 잔불이 여기저기 붙었다 — 소화기로 꺼!", 4.5f);
@@ -1320,7 +1321,7 @@ public partial class SKMain : MonoBehaviour
         gasAdding = false;        // 새 가스 구름 생성 중단
         SKSound.StopLoop(2);      // 밸브 잠금 = 누출음 즉시 정지
         score += 150;
-        AddFloat(new Vector3(17.4f, 1.6f, 0.8f), "+150 가스 차단!");
+        AddFloat(Pz(new Vector3(12.6f, 1.6f, 0.8f), new Vector3(17.4f, 1.6f, 0.8f)), "+150 가스 차단!");
         if (!qWindowOpen) Say("밸브 잠금! 이제 창문을 열어 환기해!", 4f);
         TryFinishVent();
     }
@@ -1376,7 +1377,7 @@ public partial class SKMain : MonoBehaviour
     /// 바닥에 깔리는 가스: 독구름 프리팹을 누출점부터 온 바닥으로 점점 추가 (누출 지점은 두 화구 중 랜덤)
     void StartGasLeak()
     {
-        var src = Random.value < 0.5f ? SKData.HZ["yellow"] : SKData.HZ["boil"];
+        var src = Random.value < 0.5f ? HzPos("yellow") : HzPos("boil");
         SKSound.Loop(2, "sfx_gas_leak", 0.7f);
         gasAdding = true;
         StartCoroutine(GasSpread(new Vector3(src.x, 0.25f, src.z + 0.5f)));
@@ -1390,11 +1391,11 @@ public partial class SKMain : MonoBehaviour
         while (gasAdding && n < 11)
         {
             // 갈수록 넓은 반경에 배치 → 화구 주변에서 온 바닥으로 확산
-            float rad = Mathf.Min(12f, 0.3f + n * 0.9f);
+            float rad = Mathf.Min(Pf(8f, 12f), 0.3f + n * 0.9f);
             float ang = Random.value * Mathf.PI * 2f;
             var pos = origin + new Vector3(Mathf.Cos(ang), 0, Mathf.Sin(ang)) * (Random.value * rad);
-            pos.x = Mathf.Clamp(pos.x, 1.2f, SKData.RW - 1.2f);
-            pos.z = Mathf.Clamp(pos.z, 1.2f, SKData.RD - 1.2f);
+            pos.x = Mathf.Clamp(pos.x, 1.2f, roomW - 1.2f);
+            pos.z = Mathf.Clamp(pos.z, 1.2f, roomD - 1.2f);
             pos.y = 0.3f;
             var go = Instantiate(prefab);
             go.name = "quake_gas" + n;
@@ -1648,7 +1649,7 @@ public partial class SKMain : MonoBehaviour
         CloseChoice();
         score = 0; combo = 0; comboT = 0; acha = 0;
         stageT = 0; spawnT = 1.5f; over = false;
-        player.position = new Vector3(12f, 0f, 8.5f);
+        player.position = Pz(new Vector3(6f, 0f, 6.2f), new Vector3(12f, 0f, 8.5f));
         // 지진 상태 초기화
         foreach (var go in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
             if (go.name.StartsWith("quake_") || go.name == "guide_arrow" || go.name == "spray")
@@ -1834,9 +1835,9 @@ public partial class SKMain : MonoBehaviour
                 float spd = SKData.SPEED * (sprinting ? SKData.RUN_MULT : 1f);
                 var p = player.position;
                 // 축 분리 이동: 막힌 축만 멈추고 나머지 축으로 미끄러짐
-                float nx = Mathf.Clamp(p.x + d.x * spd * dt, 0.6f, SKData.RW - 0.6f);
+                float nx = Mathf.Clamp(p.x + d.x * spd * dt, 0.6f, roomW - 0.6f);
                 if (!Blocked(new Vector3(nx, 0, p.z))) p.x = nx;
-                float nz = Mathf.Clamp(p.z + d.y * spd * dt, 0.6f, SKData.RD - 0.6f);
+                float nz = Mathf.Clamp(p.z + d.y * spd * dt, 0.6f, roomD - 0.6f);
                 if (!Blocked(new Vector3(p.x, 0, nz))) p.z = nz;
                 player.position = p;
                 moving = true;

@@ -490,7 +490,8 @@ public partial class SKMain
         hitstopOn = true;
         Time.timeScale = 0.05f;
         yield return new WaitForSecondsRealtime(d);
-        Time.timeScale = 1f;
+        // 퀴즈 일시정지 중이면 0 유지 (팝업 pause를 깨지 않기)
+        Time.timeScale = (openEv != null || quizOpen) ? 0f : 1f;
         hitstopOn = false;
     }
 

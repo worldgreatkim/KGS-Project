@@ -220,7 +220,7 @@ public partial class SKMain
         var jolt = fpShakeAmp > 0.001f
             ? new Vector3((Random.value - 0.5f) * fpShakeAmp * 2f, (Random.value - 0.5f) * fpShakeAmp, 0)
             : Vector3.zero;
-        fpShakeAmp = Mathf.MoveTowards(fpShakeAmp, 0f, Time.deltaTime * 0.5f);
+        fpShakeAmp = Mathf.MoveTowards(fpShakeAmp, 0f, Time.unscaledDeltaTime * 0.5f);   // 일시정지 중에도 감쇠
         // 대피 때 몸을 숙이면 카메라도 낮아짐 (pbody 스케일 연동)
         float head = FP_HEAD * Mathf.Clamp(pbody.localScale.y, 0.45f, 1f);
         cam.transform.position = player.position + new Vector3(0, head, 0) + jolt;

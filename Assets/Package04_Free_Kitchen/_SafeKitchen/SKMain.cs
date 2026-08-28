@@ -637,38 +637,53 @@ public partial class SKMain : MonoBehaviour
         Panel(root, 240, 690, 800, 22, Color.clear, out im);
         Label(im.transform, "Unity 3D 데모 — 주방 배치는 에디터에서 자유 수정", 14, new Color(1, 1, 1, 0.5f));
 
-        // 딤 + 질문 + 선택지
-        var dr = Panel(root, 0, 0, 1280, 720, new Color(0.12f, 0.17f, 0.23f, 0.45f), out im);
+        // ---------- 안전 퀴즈: 오버쿡드 칠판 스타일 (일시정지 + 강딤 + 칠판 패널) ----------
+        var dr = Panel(root, 0, 0, 1280, 720, new Color(0.02f, 0.03f, 0.05f, 0.78f), out im);
         dim = dr.gameObject;
         var pc = new GameObject("choice");
         pc.transform.SetParent(root, false);
         var pcr = pc.AddComponent<RectTransform>();
-        pcr.anchorMin = pcr.anchorMax = new Vector2(0, 1);
-        pcr.pivot = new Vector2(0, 1);
+        pcr.anchorMin = pcr.anchorMax = new Vector2(0.5f, 0.5f);
+        pcr.pivot = new Vector2(0.5f, 0.5f);
         pcr.anchoredPosition = Vector2.zero;
         pcr.sizeDelta = new Vector2(1280, 720);
         pnChoice = pc;
-        Panel(pc.transform, 300, 150, 680, 54, NAVY, out im);
-        uiQ = Label(im.transform, "", 22, YELLOW, TextAnchor.MiddleCenter, true);
+        var CHALK = new Color(0.95f, 0.93f, 0.85f);          // 분필색
+        var BOARD = new Color(0.15f, 0.20f, 0.18f, 0.99f);   // 칠판
+        var WOOD = new Color(0.45f, 0.30f, 0.17f);           // 나무 테두리
+        var CREAM = new Color(0.93f, 0.89f, 0.79f);
+        CPanel(pc.transform, 0, 8, 760, 540, WOOD, out im);          // 나무 프레임
+        CPanel(pc.transform, 0, 8, 728, 508, BOARD, out im);         // 칠판
+        // 종이 태그 "안전 퀴즈!" (우상단, 살짝 기울임)
+        var tagRt = CPanel(pc.transform, 292, 236, 170, 60, CREAM, out im);
+        tagRt.localRotation = Quaternion.Euler(0, 0, -7f);
+        Label(im.transform, "안전 퀴즈!", 22, NAVY, TextAnchor.MiddleCenter, true);
+        // 질문 (분필 글씨) + 밑줄
+        CPanel(pc.transform, 0, 190, 660, 60, Color.clear, out im);
+        uiQ = Label(im.transform, "", 27, CHALK, TextAnchor.MiddleCenter, true);
+        CPanel(pc.transform, 0, 152, 340, 4, new Color(CHALK.r, CHALK.g, CHALK.b, 0.75f), out im);
+        // 선택지 카드 3장
         for (int i = 0; i < 3; i++)
         {
-            var row = Panel(pc.transform, 360, 240 + i * 76, 560, 62, Color.white, out im);
+            var row = CPanel(pc.transform, 0, 66 - i * 92, 580, 76, CREAM, out im);
             optRows[i] = row.gameObject;
             Image bim;
-            var badge = Panel(row, 12, 14, 34, 34, MINT, out bim);
-            Label(badge, (i + 1).ToString(), 20, NAVY, TextAnchor.MiddleCenter, true);
+            var badge = CPanel(row, -252, 0, 48, 48, Color.white, out bim);
+            bim.sprite = SprCircle(64, Color.white);
+            bim.color = YELLOW;
+            Label(badge, (i + 1).ToString(), 24, NAVY, TextAnchor.MiddleCenter, true);
             var txt = new GameObject("t");
             txt.transform.SetParent(row, false);
             optTexts[i] = txt.AddComponent<Text>();
-            optTexts[i].font = font; optTexts[i].fontSize = 20; optTexts[i].color = NAVY;
+            optTexts[i].font = font; optTexts[i].fontSize = 21; optTexts[i].color = NAVY;
             optTexts[i].alignment = TextAnchor.MiddleLeft; optTexts[i].fontStyle = FontStyle.Bold;
             optTexts[i].horizontalOverflow = HorizontalWrapMode.Overflow;
             var trt = txt.GetComponent<RectTransform>();
             trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
-            trt.offsetMin = new Vector2(60, 0); trt.offsetMax = Vector2.zero;
+            trt.offsetMin = new Vector2(78, 0); trt.offsetMax = Vector2.zero;
         }
-        Panel(pc.transform, 440, 240 + 3 * 76 + 6, 400, 26, Color.clear, out im);
-        Label(im.transform, "숫자키 1·2·3으로 선택", 17, new Color(1, 1, 1, 0.85f));
+        CPanel(pc.transform, 0, -222, 500, 28, Color.clear, out im);
+        Label(im.transform, "숫자키  1 · 2 · 3  으로 골라 봐!", 19, new Color(CHALK.r, CHALK.g, CHALK.b, 0.9f), TextAnchor.MiddleCenter, true);
         dim.SetActive(false);
         pnChoice.SetActive(false);
 
@@ -762,7 +777,7 @@ public partial class SKMain : MonoBehaviour
         for (int i = list.Count - 1; i > 0; i--)
         { int j = Random.Range(0, i + 1); var tmp = list[i]; list[i] = list[j]; list[j] = tmp; }
         hz.opts = list;
-        uiQ.text = "! " + hz.def.q;
+        uiQ.text = hz.def.q;
         for (int i = 0; i < 3; i++)
         {
             bool on = i < list.Count;
@@ -771,10 +786,34 @@ public partial class SKMain : MonoBehaviour
         }
         dim.SetActive(true);
         pnChoice.SetActive(true);
+        Time.timeScale = 0f;   // 애들이 천천히 읽도록 일시정지 (타이머·위험도 정지)
+        StartCoroutine(PopInPanel(pnChoice.transform));
         SKSound.Sfx("sfx_popup", 0.7f);
     }
 
-    void CloseChoice() { openEv = null; dim.SetActive(false); pnChoice.SetActive(false); }
+    /// 칠판 팝인 연출 (일시정지 중에도 도는 unscaled 애니)
+    IEnumerator PopInPanel(Transform tr)
+    {
+        float t = 0;
+        while (t < 0.28f)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(t / 0.28f);
+            float c1 = 1.70158f, c3 = c1 + 1f;
+            float s = 1f + c3 * Mathf.Pow(k - 1f, 3) + c1 * Mathf.Pow(k - 1f, 2);
+            tr.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+        tr.localScale = Vector3.one;
+    }
+
+    void CloseChoice()
+    {
+        openEv = null;
+        dim.SetActive(false);
+        pnChoice.SetActive(false);
+        Time.timeScale = 1f;   // 일시정지 해제
+    }
 
     void Choose(int i)
     {
@@ -1534,7 +1573,7 @@ public partial class SKMain : MonoBehaviour
     void ShowQuiz()
     {
         quizOpen = true;
-        uiQ.text = "! 소화기 사용 순서로 맞는 것은?";
+        uiQ.text = "소화기 사용 순서로 맞는 것은?";
         for (int i = 0; i < 3; i++)
         {
             optRows[i].SetActive(true);
@@ -1542,6 +1581,9 @@ public partial class SKMain : MonoBehaviour
         }
         dim.SetActive(true);
         pnChoice.SetActive(true);
+        Time.timeScale = 0f;
+        StartCoroutine(PopInPanel(pnChoice.transform));
+        SKSound.Sfx("sfx_popup", 0.7f);
     }
 
     void QuizChoice(int i)
@@ -1552,6 +1594,7 @@ public partial class SKMain : MonoBehaviour
             quizSolved = true;
             dim.SetActive(false);
             pnChoice.SetActive(false);
+            Time.timeScale = 1f;
             score += 100;
             AddFloat(player.position + new Vector3(0, 1.4f, 0), "+100 정답!");
             SKSound.Sfx("sfx_correct");
@@ -1634,11 +1677,13 @@ public partial class SKMain : MonoBehaviour
 
     IEnumerator Shake()
     {
+        // 오답 흔들림 — 일시정지 중에도 동작 (리얼타임), FP는 셰이크 앰프로 위임
+        if (fpMode) { fpShakeAmp = Mathf.Max(fpShakeAmp, 0.09f); yield break; }
         var p0 = cam.transform.position;
         cam.transform.position = p0 + new Vector3(0.15f, 0, 0);
-        yield return new WaitForSeconds(0.04f);
+        yield return new WaitForSecondsRealtime(0.04f);
         cam.transform.position = p0 + new Vector3(-0.15f, 0, 0);
-        yield return new WaitForSeconds(0.04f);
+        yield return new WaitForSecondsRealtime(0.04f);
         cam.transform.position = p0;
     }
 

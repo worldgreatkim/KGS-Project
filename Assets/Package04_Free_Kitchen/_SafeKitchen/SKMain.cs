@@ -40,6 +40,7 @@ public static class SKIn
             case KeyCode.LeftShift: return kb.leftShiftKey;
             case KeyCode.RightShift: return kb.rightShiftKey;
             case KeyCode.F1: return kb.f1Key;
+            case KeyCode.V: return kb.vKey;
         }
         return null;
     }
@@ -48,12 +49,14 @@ public static class SKIn
     public static bool MouseDown() { var m = Mouse.current; return m != null && m.leftButton.wasPressedThisFrame; }
     public static bool MouseHeld() { var m = Mouse.current; return m != null && m.leftButton.isPressed; }
     public static float MouseDX() { var m = Mouse.current; return m != null ? m.delta.ReadValue().x * 0.05f : 0f; }
+    public static float MouseDY() { var m = Mouse.current; return m != null ? m.delta.ReadValue().y * 0.05f : 0f; }
 #else
     public static bool Held(KeyCode k) { return Input.GetKey(k); }
     public static bool Down(KeyCode k) { return Input.GetKeyDown(k); }
     public static bool MouseDown() { return Input.GetMouseButtonDown(0); }
     public static bool MouseHeld() { return Input.GetMouseButton(0); }
     public static float MouseDX() { return Input.GetAxis("Mouse X"); }
+    public static float MouseDY() { return Input.GetAxis("Mouse Y"); }
 #endif
 }
 
@@ -215,6 +218,7 @@ public partial class SKMain : MonoBehaviour
         BuildTutUI();
         BuildMgUI();
         BuildAimCone();
+        FpInit();
         SKSound.Init(gameObject);
         SKSound.Loop(0, "amb_boil", 0.30f);
         SKSound.Loop(1, "amb_flame", 0.18f);
@@ -958,7 +962,7 @@ public partial class SKMain : MonoBehaviour
         qValveLocked = false;
         qWindowOpen = false;
         CloseChoice();
-        camBase = cam.transform.position;
+        camBase = fpMode ? qvCamPos : cam.transform.position;   // FP 중엔 쿼터뷰 원위치 기준
         SKSound.Sfx("sfx_quake");
         SKSound.Sfx("sfx_blackout", 0.8f);
         SKSound.VoStop();   // 긴급 경보는 무조건 끼어듦
@@ -1073,13 +1077,15 @@ public partial class SKMain : MonoBehaviour
         bool nearShelter = new Vector2(player.position.x - shelterPos.x, player.position.z - shelterPos.z).magnitude < 1.5f;
         if (quakeState == 1)
         {
-            cam.transform.position = camBase + new Vector3((Random.value - 0.5f) * 0.24f, (Random.value - 0.5f) * 0.12f, 0);
+            if (!fpMode)
+                cam.transform.position = camBase + new Vector3((Random.value - 0.5f) * 0.24f, (Random.value - 0.5f) * 0.12f, 0);
+            // (FP 셰이크는 LateUpdate의 fpShakeAmp가 담당)
             var sc = pbody.localScale;
             sc.y = Mathf.Lerp(sc.y, nearShelter ? 0.62f : 1f, 10f * dt);
             pbody.localScale = sc;
             if (quakeT >= 6f)
             {
-                cam.transform.position = camBase;
+                if (!fpMode) cam.transform.position = camBase;
                 if (dustPs != null) { var de = dustPs.emission; de.enabled = false; }
                 if (nearShelter)
                 {
@@ -1733,6 +1739,10 @@ public partial class SKMain : MonoBehaviour
         // 튜토리얼 건너뛰기
         if (TutActive && SKIn.Down(KeyCode.F1)) { TutFinish(true); }
 
+        // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리
+        if (SKIn.Down(KeyCode.V)) ToggleFp();
+        FpUpdate();
+
         // 키 입력
         if (SKIn.Down(KeyCode.Space) || SKIn.Down(KeyCode.Return))
         {
@@ -1802,6 +1812,12 @@ public partial class SKMain : MonoBehaviour
         bool sprinting = false;
         if (!over && openEv == null && !quizOpen && !mgOpen)
         {
+            if (fpMode)
+            {
+                moving = FpMoveInput(dt, ref sprinting);   // 1인칭: 시선 기준 WASD
+            }
+            else
+            {
             var d = Vector2.zero;
             // 카메라가 -Z를 보므로(yaw 180) 화면 왼쪽 = 월드 +X
             if (SKIn.Held(KeyCode.LeftArrow) || SKIn.Held(KeyCode.A)) d.x += 1;
@@ -1826,6 +1842,7 @@ public partial class SKMain : MonoBehaviour
                 float yaw = Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg;
                 // 일정 각속도 회전 — 대각 전환도 즉답 (Slerp의 넓은 회전 반경 제거)
                 pbody.rotation = Quaternion.RotateTowards(pbody.rotation, Quaternion.Euler(0, yaw, 0), 780f * dt);
+            }
             }
         }
         if (hasAnim)
@@ -1996,9 +2013,17 @@ public partial class SKMain : MonoBehaviour
         if (showPrompt)
         {
             uiPrompt.text = promptTxt;
-            var ui = ToUI(player.position + new Vector3(0, 1.9f, 0));
             var rt = pnPrompt.GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2(ui.x - 120, ui.y + 20);
+            if (fpMode)
+            {
+                // 1인칭: 크로스헤어 아래 고정 (머리 위 좌표는 카메라 뒤라 못 씀)
+                rt.anchoredPosition = new Vector2(520, -455);
+            }
+            else
+            {
+                var ui = ToUI(player.position + new Vector3(0, 1.9f, 0));
+                rt.anchoredPosition = new Vector2(ui.x - 120, ui.y + 20);
+            }
         }
 
         // 월드 플로트

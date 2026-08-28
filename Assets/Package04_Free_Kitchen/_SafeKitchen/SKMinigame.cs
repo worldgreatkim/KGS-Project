@@ -522,6 +522,7 @@ public partial class SKMain
 
     IEnumerator ShakeMiniCo(float amp, float dur)
     {
+        if (fpMode) { fpShakeAmp = Mathf.Max(fpShakeAmp, amp); yield break; }   // FP는 LateUpdate가 처리
         var p0 = cam.transform.position;
         float t = 0;
         while (t < dur)
@@ -547,7 +548,10 @@ public partial class SKMain
         {
             t += Time.deltaTime;
             if (quakeState != 0) break;   // 본지진 시작 — 즉시 양보
-            cam.transform.position = b + new Vector3((Random.value - 0.5f) * 0.05f, (Random.value - 0.5f) * 0.03f, 0);
+            if (!fpMode)
+                cam.transform.position = b + new Vector3((Random.value - 0.5f) * 0.05f, (Random.value - 0.5f) * 0.03f, 0);
+            else
+                fpShakeAmp = Mathf.Max(fpShakeAmp, 0.035f);
             bool off = (t > 0.30f && t < 0.42f) || (t > 0.75f && t < 0.92f);
             for (int i = 0; i < pls.Length; i++)
                 if (pls[i] != null) pls[i].intensity = bases[i] * (off ? 0.25f : 1f);
@@ -555,7 +559,7 @@ public partial class SKMain
         }
         if (quakeState == 0)
         {
-            cam.transform.position = b;
+            if (!fpMode) cam.transform.position = b;
             for (int i = 0; i < pls.Length; i++)
                 if (pls[i] != null) pls[i].intensity = bases[i];
         }

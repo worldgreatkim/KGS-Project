@@ -59,3 +59,7 @@ Thumbs.db
 /diag_*.png
 /*.jpg
 /diag.png
+
+# 빌드 산출물 (대용량)
+/Builds/
+

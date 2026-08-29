@@ -18,3 +18,21 @@
 - ShowRank 첫 호출 TargetInvocationException — 컴파일 전 시작된 스테일 플레이 세션. stop 후 재플레이로 해결
 - 콤팩트 패널 미적용 — refresh_unity가 리컴파일 미실행. CompilationPipeline.RequestScriptCompilation으로 강제 후 정상
 - 모달(랭크·일시정지) 중 스테이션 라벨 빌보드 동결로 거울처럼 보임 — 게임 중 정상, 딤 아래 배경이라 무해 판정
+
+## [구현] 마라톤 P4~P6 — GLB 다이어트·exe v0.3·문서 4종·QA 스냅 — 2026-08-29 11:25
+### 프롬프트
+맵 스케치는 좀더 고민햅몰게 일단 17번까지 진행해
+> 맥락: 마라톤 잔여 P4(빌드)·P5(문서)·P6(QA·푸시)
+### 조작 내역
+- GLB 다이어트: gltf-transform weld+simplify(ratio 0.35)로 Mod_* 5종 72MB→25MB. 재임포트 후 MOD 씬 시각 무손상 확인. 원본은 샌드박스 백업
+- EditorBuildSettings 3씬 등록 누락 발견→재등록(파일 검증). CanvasScaler match 0.5 기존 적용 확인
+- exe v0.3: manage_build windows64, 3씬 포함 → Builds/StandaloneWindows64/GasProject.exe (694MB, 170s). DoNotShip 제외 zip 308MB(SafeKitchen_v03_win64.zip). Builds/를 gitignore 추가
+- QA 스냅 7종 수집(Docs/shots): 타이틀·기본·확장쿼터뷰·1인칭·모듈·밸브미니게임·랭크 — jpg 축소본 병행
+- 문서 4종: 제출문서_세이프키친.docx(7p, 표지+개요+교육매핑+AI활용 기술문서+실행+라이선스, 스냅 5장 삽입), 촬영콘티_1분.md, 기획서_v0.4.md, README 스크린샷 갤러리
+### 검증
+- zip 무결성: unzip -t 통과. docx: LibreOffice PDF 렌더 7페이지 눈검수(표·이미지·캡션 정상)
+- 씬별 플레이 스냅 눈검수: 미니게임 콤팩트/tall 왕복, FP 밝은 컷 재촬영 포함
+### 실패와 수정
+- 빌드가 지정 경로 무시하고 기본 경로 출력 — 산출물 확인으로 갈음
+- mount에서 zip 생성/삭제 불가(lock) — /tmp 생성 후 cp, 잔재 2개는 bat에서 삭제
+- FP 1인칭 첫 스냅이 위험 연출로 어두움 — ResetGame+북향 재촬영

@@ -250,10 +250,17 @@ public partial class SKMain : MonoBehaviour
     {
         var kitchen = GameObject.Find("Kitchen");
         if (kitchen == null) return null;
-        foreach (Transform c in kitchen.transform)
-            if (c.name.Contains(contains) && (exclude == null || !c.name.Contains(exclude)))
-                return c;
-        return null;
+        // 아일랜드 그룹핑 후 유닛이 깊이 1 이상에 있을 수 있어 재귀 검색.
+        // StoveAnchor(빈 앵커 노드)가 있으면 우선 — boilPos가 앵커 위치를 그대로 쓰는 기존 동작 보존
+        Transform first = null;
+        foreach (var c in kitchen.GetComponentsInChildren<Transform>(true))
+        {
+            if (c == kitchen.transform) continue;
+            if (!c.name.Contains(contains) || (exclude != null && c.name.Contains(exclude))) continue;
+            if (c.name.Contains("Anchor")) return c;
+            if (first == null) first = c;
+        }
+        return first;
     }
 
     // ---------- 빌드 ----------

@@ -115,3 +115,14 @@ Counter 위에 올린건 좋은데 가스레인지가 넘 작아. 카운터가 �
 ### 실패와 수정
 - 진단 렌더를 기본 씬에서 실행(씬 확인 누락) → NRE. 씬 이름 확인 후 MOD 열고 재실행
 - 컷 단면 노출로 몸통이 투명하게 보임 → 캡 패널로 해결(1차 캡 과대·형광끼 → 색·크기 2회 조정)
+
+## [수정] 빌트인 싱크 롤백 — SinkStation(손잡이 제거판)으로 복귀 — 2026-08-29 14:55
+### 프롬프트
+롤백하자
+### 조작 내역
+- SafeKitchen3D_MOD.unity를 9e2d337 버전으로 파일 복원(git show > file — 히스토리 조작 없음)
+- 롤백으로 미사용이 된 BuiltinSink.asset·MintCap.mat·CreamCap.mat 제거(git rm)
+### 검증
+- 클로즈업 스냅: SinkStation 깊은 보울+노브 없는 문 상태 확인, builtin_sink·cap 흔적 0
+### 실패와 수정
+- 없음

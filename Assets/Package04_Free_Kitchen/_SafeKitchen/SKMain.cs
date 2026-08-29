@@ -1274,9 +1274,9 @@ public partial class SKMain : MonoBehaviour
             }
         if (IsModKit())
         {
-            // 아일랜드 C·D 조리대 위 — 소품(전자레인지·커피메이커)과 겹치지 않는 지점
-            cands.Add(new Vector3(10.35f, 1.45f, 8.2f));
-            cands.Add(new Vector3(18.75f, 1.45f, 8.2f));
+            // 아일랜드 C·D 서쪽 마감 조리대 위 (소품 없는 칸)
+            cands.Add(new Vector3(4.3f, 1.45f, 8.2f));
+            cands.Add(new Vector3(15.5f, 1.45f, 8.2f));
         }
         while (cands.Count < 4) cands.Add(new Vector3(6.3f + cands.Count * 2.5f, 1.35f, Pf(9.0f, 14.0f)));
         for (int i = cands.Count - 1; i > 0; i--)

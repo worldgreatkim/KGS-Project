@@ -48,17 +48,17 @@ public static class SKData
     };
 
     // ---- 위험 위치 (MOD 아일랜드 배치 — SafeKitchen3D_MOD.unity, 2026-08-29 스케치 반영) ----
-    // 아일랜드 A(8.0,4.2)=버너W·냄비 없음, B(17.5,4.2)=버너E·냄비, C(8.0,8.2), D(17.5,8.2)
+    // 4칸 아일랜드 (서→동) [조리대][버너][소품조리대][싱크]: 버너 A(6.1,4.2) B(17.3,4.2)·냄비 C(6.1,8.2) D(17.3,8.2)
     public static readonly Dictionary<string, Vector3> HZ_MOD = new Dictionary<string, Vector3>
     {
-        {"boil",   new Vector3(17.4f, 1.65f, 4.2f)},
-        {"yellow", new Vector3(8.0f,  1.65f, 4.2f)},
+        {"boil",   new Vector3(17.2f, 1.65f, 4.2f)},
+        {"yellow", new Vector3(6.1f,  1.65f, 4.2f)},
         {"hood",   new Vector3(20.9f, 2.35f, 1.6f)},
         {"towel",  new Vector3(20.2f, 1.4f,  0.85f)},
-        {"oil",    new Vector3(8.0f,  1.5f,  8.2f)},
+        {"oil",    new Vector3(6.1f,  1.5f,  8.2f)},
         {"hose",   new Vector3(17.4f, 1.5f,  1.2f)},
-        {"butane", new Vector3(17.5f, 1.5f,  8.2f)},
-        {"kid",    new Vector3(4.5f,  0.0f,  6.0f)},
+        {"butane", new Vector3(17.3f, 1.5f,  8.2f)},
+        {"kid",    new Vector3(4.5f,  0.0f,  11.0f)},
     };
 
     // ---- 위험 위치 (원본 맵 19.2×10.8 — SafeKitchen3D.unity 쿼터뷰 씬용) ----

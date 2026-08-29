@@ -52,3 +52,4 @@
 - Models3D/Mod_Counter·Mod_Stove·Mod_Sink·Mod_Corner·Mod_Wall.glb (모듈 킷 5종): Gemini 이미지(기준 유닛 파생 방식, refs/Mod_*.png) → Tripo image-to-model (2026-08-30). SafeKitchen3D_MOD 씬 그리드 조립용 — 스토어 가구 대체. ※ Mod_Stove는 탁상 버너 방식으로, Mod_Sink는 기존 SinkStation(깊은 보울)으로 이후 대체
 - Models3D/Mod_Burner.glb (탁상 2구 버너): Gemini 이미지(refs/Mod_Burner.png) → Tripo image-to-model (2026-08-29). Counter 위 거치 방식 — 스토브 유닛 대체
 - Models3D/FryingPan.glb (프라이팬): Tripo text-to-model 직접 생성 (2026-08-29, 프롬프트: 오버쿡드풍 네이비 팬+크림 손잡이). 빈 팬 가열 위험 연출 소품
+- Models3D/SafeBasket.glb (안전지대 보관 바구니): Gemini 파생 생성(기준: refs/Mod_Burner.png, 원본 refs/SafeBasket.png·SafeZone.png) → Tripo image-to-model (2026-08-30). 안전지대 매트 위 배치 — 위험물 보관 행동요령 시각화

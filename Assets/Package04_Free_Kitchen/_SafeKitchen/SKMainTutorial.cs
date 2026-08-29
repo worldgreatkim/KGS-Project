@@ -125,6 +125,7 @@ public partial class SKMain
         tutStep = -1;
         tutDone = false;
         pnTut.SetActive(true);
+        if (pnUlt != null) pnUlt.SetActive(false);   // 훈련 대화창과 겹침 방지
         TutGoto(0);
     }
 
@@ -143,17 +144,40 @@ public partial class SKMain
         TutSetupGate(TUT_GATES[step]);
     }
 
+    /// 플레이어에서 충분히 먼 통로 지점을 목표로 선정 — "달려가는 훈련" 느낌의 원거리 보장.
+    /// 후보는 확정 빈 공간인 통로 그리드(가로 3열×세로 3행). 남쪽(대화창에 가리는 영역)은 제외.
+    Vector3 TutPickTarget(float dist, Vector3 fallback)
+    {
+        float[] gx = { 3.0f, roomW * 0.5f, roomW - 3.0f };       // 서 통로 · 중앙 통로 · 동 통로
+        float[] gz = { 2.8f, 6.2f, 9.6f };                        // 북 통로 · 행간 통로 · 남측 통로
+        Vector3 best = fallback;
+        float bestScore = float.MinValue;
+        for (int xi = 0; xi < 3; xi++)
+            for (int zi = 0; zi < 3; zi++)
+            {
+                var pos = new Vector3(gx[xi], 0f, gz[zi]);
+                if (Blocked(pos)) continue;
+                float d = new Vector2(pos.x - player.position.x, pos.z - player.position.z).magnitude;
+                if (d < 3.5f) continue;                           // 너무 가까운 지점 제외
+                // dist에 가장 가까운 지점 우대 (초과는 허용, 미달은 감점)
+                float score = -Mathf.Abs(d - dist) + (d >= dist * 0.8f ? 50f : 0f);
+                if (score > bestScore) { bestScore = score; best = pos; }
+            }
+        return best;
+    }
+
     void TutSetupGate(int gate)
     {
         if (arrowGo != null) Destroy(arrowGo);
         if (gate == TG_MOVE)
         {
-            tutTarget = Pz(new Vector3(10.6f, 0, 5.6f), new Vector3(10.6f, 0, 10.6f));
+            // 현재 캐릭터 위치에서 확실히 떨어진 지점으로 (고정 좌표는 폴백)
+            tutTarget = TutPickTarget(7.0f, Pz(new Vector3(10.6f, 0, 5.6f), new Vector3(10.6f, 0, 10.6f)));
             MakeArrow(tutTarget + new Vector3(0, 1.9f, 0));
         }
         else if (gate == TG_SPRINT)
         {
-            tutTarget = Pz(new Vector3(4.2f, 0, 8.0f), new Vector3(4.2f, 0, 13.0f));
+            tutTarget = TutPickTarget(11.0f, Pz(new Vector3(4.2f, 0, 8.0f), new Vector3(4.2f, 0, 13.0f)));
             MakeArrow(tutTarget + new Vector3(0, 1.9f, 0));
         }
         else if (gate == TG_HAZARD)
@@ -276,6 +300,7 @@ public partial class SKMain
     /// 수료(false=정상 완주) 또는 F1 스킵(true)
     void TutFinish(bool skipped)
     {
+        if (pnUlt != null) pnUlt.SetActive(true);   // 훈련 끝 — 게이지 복귀
         // 잔여 연습 요소 정리
         foreach (var hz in hazards) Destroy(hz.node);
         hazards.Clear();

@@ -35,12 +35,13 @@ public partial class SKMain
     void UltInit()
     {
         // 좌하단 게이지 바 + 라벨
+        // 우하단 — 좌하단은 훈련 대화창 초상화와 겹침
         pnUlt = new GameObject("ult");
         pnUlt.transform.SetParent(canvas.transform, false);
         var rt = pnUlt.AddComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
-        rt.pivot = new Vector2(0f, 0f);
-        rt.anchoredPosition = new Vector2(24, 24);
+        rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot = new Vector2(1f, 0f);
+        rt.anchoredPosition = new Vector2(-24, 52);
         rt.sizeDelta = new Vector2(230, 54);
         Image im;
         var bg = UP(pnUlt.transform, 0, 0, 230, 26, new Color(0.10f, 0.13f, 0.19f, 0.85f), out im);

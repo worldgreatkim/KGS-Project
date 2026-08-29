@@ -173,6 +173,7 @@ public partial class SKMain : MonoBehaviour
     {
         cam = Camera.main;
         DetectMap();   // 씬(맵 버전) 판정 — 좌표·시점 분기의 기준
+        bool modKit = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.EndsWith("_MOD");
         font = LoadFont();
         BuildPlayer();
         BuildUI();
@@ -184,7 +185,10 @@ public partial class SKMain : MonoBehaviour
             {
                 var b = rs[0].bounds;
                 foreach (var r in rs) b.Encapsulate(r.bounds);
-                boilPos = new Vector3(b.center.x - 0.25f, b.max.y + 0.16f, b.center.z - 0.05f);
+                // MOD 모듈 스토브는 화구가 좌우 2구 — 김·불꽃을 서쪽 화구 중심에
+                boilPos = modKit
+                    ? new Vector3(b.center.x - 0.45f, b.max.y + 0.10f, b.center.z + 0.06f)
+                    : new Vector3(b.center.x - 0.25f, b.max.y + 0.16f, b.center.z - 0.05f);
             }
             else boilPos = stv.position;   // 빈 앵커 노드(StoveAnchor)면 그 위치 그대로
         }
@@ -214,8 +218,10 @@ public partial class SKMain : MonoBehaviour
             foreach (Transform t in kk.transform)
                 if (t.name.Contains("FireExtinguisher")) extList.Add(t);
         // 화구 불꽃: 냄비 아래 + 빈 화구 (yellow 위험이 이 화구를 노랗게 만든다)
-        BuildFlame(0, new Vector3(boilPos.x, 1.28f, boilPos.z - 0.05f));
-        BuildFlame(1, new Vector3(HzPos("yellow").x, 1.28f, 1.9f));
+        // MOD 씬은 모듈 스토브의 화구 트레이가 높아(상판 정렬 보정) 불꽃도 따라 올림
+        float flameY = modKit ? 1.34f : 1.28f;
+        BuildFlame(0, new Vector3(boilPos.x, flameY, boilPos.z - 0.05f));
+        BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.45f : 0f), flameY, 1.9f));
         SetFlame(0, false);
         SetFlame(1, false);
         BuildTitle();

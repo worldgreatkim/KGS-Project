@@ -844,6 +844,7 @@ public partial class SKMain : MonoBehaviour
             if (openEv.type == "boil" && valvePivot != null) StartCoroutine(TurnValve(90f));
             if (openEv.type == "yellow") SetFlame(1, false);
             if (openEv.type == "hose") MgStart(4);   // 비눗물 점검 미니게임 (연타)
+            if (openEv.type == "towel") FlyTowelToSafeZone(openEv.node.transform.position);   // 행주 → 안전지대 바구니
             // 환기 계열 정답 → 창문 열림 (6초 후 자동 닫힘)
             if ((openEv.type == "boil" || openEv.type == "yellow" || openEv.type == "hood")
                 && windowOpen != null && windowClosed != null)

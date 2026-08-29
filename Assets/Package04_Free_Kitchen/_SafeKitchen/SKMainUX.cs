@@ -24,6 +24,53 @@ public partial class SKMain
     static readonly string[] SCENES = { "SafeKitchen3D", "SafeKitchen3D_FP", "SafeKitchen3D_MOD" };
     static readonly string[] SCENE_NAMES = { "기본 주방", "넓은 주방", "모듈 주방" };
 
+    /// towel 정답: 행주가 안전지대 바구니로 포물선 비행 — 바구니 없는 씬은 조용히 생략
+    void FlyTowelToSafeZone(Vector3 from)
+    {
+        var basket = GameObject.Find("SafeBasket");
+        if (basket == null) return;
+        var b = RB(basket);
+        var to = new Vector3(b.center.x, b.max.y + 0.05f, b.center.z);
+        StartCoroutine(FlyTowelCo(from + new Vector3(0, 0.3f, 0), to));
+    }
+
+    IEnumerator FlyTowelCo(Vector3 from, Vector3 to)
+    {
+        // 납작한 분홍 행주 (절차 생성 — 바구니 속 행주와 같은 톤)
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = "fly_towel";
+        Destroy(go.GetComponent<Collider>());
+        go.transform.localScale = new Vector3(0.42f, 0.09f, 0.34f);
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        mat.color = new Color(0.93f, 0.55f, 0.58f);
+        mat.SetFloat("_Smoothness", 0.35f);
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+
+        float dur = 0.85f, t = 0f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / dur);
+            var p = Vector3.Lerp(from, to, k);
+            p.y += Mathf.Sin(k * Mathf.PI) * 2.3f;              // 포물선 아치
+            go.transform.position = p;
+            go.transform.rotation = Quaternion.Euler(k * 540f, k * 180f, 0);   // 빙글빙글
+            yield return null;
+        }
+        // 착지: 뿅 축소 + 효과음 + 안내
+        SKSound.Sfx("sfx_popup", 0.8f, 1.25f);
+        AddFloat(to + new Vector3(0, 0.4f, 0), "안전지대로!");
+        float s = 0f;
+        var s0 = go.transform.localScale;
+        while (s < 0.22f)
+        {
+            s += Time.deltaTime;
+            go.transform.localScale = s0 * Mathf.Lerp(1f, 0.01f, s / 0.22f);
+            yield return null;
+        }
+        Destroy(go);
+    }
+
     void UxInit()
     {
         // 오답 플래시 (전체 화면, 평소 투명)

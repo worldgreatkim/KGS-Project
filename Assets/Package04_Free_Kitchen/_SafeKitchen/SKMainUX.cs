@@ -24,6 +24,143 @@ public partial class SKMain
     static readonly string[] SCENES = { "SafeKitchen3D", "SafeKitchen3D_FP", "SafeKitchen3D_MOD" };
     static readonly string[] SCENE_NAMES = { "기본 주방", "넓은 주방", "모듈 주방" };
 
+    // ---- 궁극기: 배기통 레인저 "가스 흡수" (KGS 공식 설정 — 손바닥으로 유출 가스를 빨아들임) ----
+    int ultGauge;                 // 0~ULT_MAX. 정답·잔불 진압·미니게임 성공으로 충전
+    const int ULT_MAX = 4;
+    GameObject pnUlt;
+    Image ultFill;
+    Text ultLabel;
+    bool ultBusy;                 // 흡수 연출 중 재발동 방지
+
+    void UltInit()
+    {
+        // 좌하단 게이지 바 + 라벨
+        pnUlt = new GameObject("ult");
+        pnUlt.transform.SetParent(canvas.transform, false);
+        var rt = pnUlt.AddComponent<RectTransform>();
+        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
+        rt.pivot = new Vector2(0f, 0f);
+        rt.anchoredPosition = new Vector2(24, 24);
+        rt.sizeDelta = new Vector2(230, 54);
+        Image im;
+        var bg = UP(pnUlt.transform, 0, 0, 230, 26, new Color(0.10f, 0.13f, 0.19f, 0.85f), out im);
+        var fillRt = UP(pnUlt.transform, 3, 3, 224, 20, new Color(0.35f, 0.85f, 0.65f, 0.95f), out ultFill);
+        fillRt.pivot = new Vector2(0f, 0f);
+        fillRt.anchoredPosition = new Vector2(3, 3);
+        var lrt = UP(pnUlt.transform, 0, 30, 230, 24, Color.clear, out im);
+        ultLabel = Label(lrt.transform, "", 17, Color.white, TextAnchor.MiddleLeft, true);
+        UltRefresh();
+    }
+
+    // 좌하단 앵커 패널 헬퍼 (CPanel은 중앙 앵커라 별도)
+    RectTransform UP(Transform parent, float x, float y, float w, float h, Color c, out Image img)
+    {
+        var go = new GameObject("u");
+        go.transform.SetParent(parent, false);
+        img = go.AddComponent<Image>();
+        img.color = c;
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
+        rt.pivot = new Vector2(0f, 0f);
+        rt.anchoredPosition = new Vector2(x, y);
+        rt.sizeDelta = new Vector2(w, h);
+        return rt;
+    }
+
+    void UltRefresh()
+    {
+        if (ultFill == null) return;
+        float k = (float)ultGauge / ULT_MAX;
+        ultFill.rectTransform.sizeDelta = new Vector2(Mathf.Max(4f, 224f * k), 20f);
+        bool full = ultGauge >= ULT_MAX;
+        ultFill.color = full ? new Color(1f, 0.85f, 0.25f, 0.98f) : new Color(0.35f, 0.85f, 0.65f, 0.95f);
+        ultLabel.text = full ? "[Q] 필살기: 가스 흡수!" : "필살기 게이지 " + ultGauge + "/" + ULT_MAX;
+        ultLabel.color = full ? new Color(1f, 0.9f, 0.4f) : Color.white;
+    }
+
+    /// 올바른 행동(정답·진압·미니게임 성공)마다 충전 — "잘 배울수록 강해진다"
+    void UltCharge()
+    {
+        if (ultGauge >= ULT_MAX) return;
+        ultGauge++;
+        UltRefresh();
+        if (ultGauge >= ULT_MAX) SKSound.Sfx("sfx_combo", 0.8f, 1.3f);
+    }
+
+    void UltReset() { ultGauge = 0; ultBusy = false; UltRefresh(); }
+
+    /// Q 발동 — 깔린 가스가 있을 때만. 밸브·환기 행동요령은 대체하지 않는다(보조 스킬)
+    void UltFire()
+    {
+        if (ultBusy) return;
+        if (ultGauge < ULT_MAX)
+        {
+            Say("필살기 게이지가 아직! 올바른 행동으로 채우자 (" + ultGauge + "/" + ULT_MAX + ")", 2.5f);
+            return;
+        }
+        if (gasClouds.Count == 0)
+        {
+            Say("지금은 흡수할 가스가 없어!", 2.2f);
+            return;
+        }
+        ultGauge = 0;
+        UltRefresh();
+        StartCoroutine(UltAbsorbCo());
+    }
+
+    IEnumerator UltAbsorbCo()
+    {
+        ultBusy = true;
+        Say("배기통 레인저! 손바닥으로 가스 흡수!", 3f);
+        SKSound.Sfx("sfx_vent", 0.9f, 1.15f);
+        PunchZoom();
+        // 청록 흡수 웨이브 (플레이어 중심 확장 구체)
+        var wave = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        wave.name = "ult_wave";
+        Destroy(wave.GetComponent<Collider>());
+        // Sprites/Default: 런타임 생성에도 확실한 반투명 (URP Lit은 키워드 없이 투명 전환 안 됨)
+        var wm = new Material(Shader.Find("Sprites/Default"));
+        wm.color = new Color(0.4f, 0.95f, 0.8f, 0.30f);
+        wave.GetComponent<Renderer>().sharedMaterial = wm;
+        var hand = player.position + new Vector3(0, 0.9f, 0);
+        wave.transform.position = hand;
+
+        // 가스 구름이 손으로 수렴 + 웨이브 확장
+        var starts = new List<Vector3>();
+        var scales = new List<Vector3>();
+        foreach (var c in gasClouds)
+        {
+            starts.Add(c != null ? c.position : Vector3.zero);
+            scales.Add(c != null ? c.localScale : Vector3.one);
+        }
+        float t = 0, dur = 1.4f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / dur);
+            wave.transform.localScale = Vector3.one * Mathf.Lerp(0.5f, 14f, k);
+            wm.color = new Color(0.4f, 0.95f, 0.8f, 0.30f * (1f - k));
+            for (int i = 0; i < gasClouds.Count; i++)
+            {
+                var c = gasClouds[i];
+                if (c == null) continue;
+                float kk = Mathf.Clamp01(k * 1.3f - i * 0.02f);
+                c.position = Vector3.Lerp(starts[i], hand, Mathf.SmoothStep(0f, 1f, kk));
+                c.localScale = scales[i] * (1f - 0.9f * kk);
+            }
+            yield return null;
+        }
+        Destroy(wave);
+        foreach (var c in gasClouds) if (c != null) Destroy(c.gameObject);
+        gasClouds.Clear();
+        score += 300;
+        AddFloat(hand + new Vector3(0, 0.6f, 0), "+300 가스 흡수!");
+        SKSound.Sfx("sfx_correct", 1f, 1.2f);
+        // 교육 포인트: 밸브를 안 잠갔다면 가스는 다시 샌다
+        if (gasAdding) Say("가스가 또 새어나와! 밸브부터 잠가야 해!", 3.5f);
+        ultBusy = false;
+    }
+
     /// towel 정답: 행주가 안전지대 바구니로 포물선 비행 — 바구니 없는 씬은 조용히 생략
     void FlyTowelToSafeZone(Vector3 from)
     {

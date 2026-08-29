@@ -44,6 +44,7 @@ public static class SKIn
             case KeyCode.Escape: return kb.escapeKey;
             case KeyCode.T: return kb.tKey;
             case KeyCode.G: return kb.gKey;
+            case KeyCode.Q: return kb.qKey;
         }
         return null;
     }
@@ -230,6 +231,7 @@ public partial class SKMain : MonoBehaviour
         BuildAimCone();
         FpInit();
         UxInit();
+        UltInit();
         SKSound.Init(gameObject);
         SKSound.Music("bgm_title", 0.45f);
         SKSound.Loop(0, "amb_boil", 0.30f);
@@ -863,6 +865,7 @@ public partial class SKMain : MonoBehaviour
             PunchZoom();
             FxCorrect();
             BadgeProgress();   // 점검왕·콤보 배지 진행
+            UltCharge();       // 올바른 행동 → 필살기 게이지
             Say(openEv.def.toast, 3f);
             StartCoroutine(Pop(openEv.node));
             hazards.Remove(openEv);
@@ -1353,6 +1356,7 @@ public partial class SKMain : MonoBehaviour
         }
         if (fireSmokeL[idx] != null) StartCoroutine(StopSmokeSoon(fireSmokeL[idx]));
         if (fireLightL[idx] != null) StartCoroutine(FadeFireLight(fireLightL[idx]));
+        UltCharge();   // 잔불 진압 → 필살기 게이지
     }
 
     /// 화구 불꽃·김 일괄 소등
@@ -1746,6 +1750,7 @@ public partial class SKMain : MonoBehaviour
         rankShown = false; if (pnRank != null) pnRank.SetActive(false);
         if (paused) ResumeGame();
         runBadges.Clear();
+        UltReset();
         SKSound.Music("bgm_main", 0.3f);
         if (carryExt != null) { carryExt.SetParent(null, true); carryExt.localScale = extHomeScale; carryExt = null; }
         quakeState = 0; quakeDone = false;
@@ -1846,6 +1851,9 @@ public partial class SKMain : MonoBehaviour
         if (RankUpdate()) return;
         if (SKIn.Down(KeyCode.Escape)) TogglePause();
         if (PauseUpdate()) return;
+
+        // 궁극기 (배기통 레인저 — 가스 흡수)
+        if (SKIn.Down(KeyCode.Q)) UltFire();
 
         // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리
         if (SKIn.Down(KeyCode.V)) ToggleFp();

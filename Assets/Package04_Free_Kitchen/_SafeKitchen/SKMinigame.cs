@@ -326,6 +326,7 @@ public partial class SKMain
         mgOpen = false;
         int k = mgKind;
         mgKind = -1;
+        UltCharge();   // 미니게임 성공 → 필살기 게이지
         if (k == 0)
         {
             if (valvePivot != null) StartCoroutine(TurnValve(90f));

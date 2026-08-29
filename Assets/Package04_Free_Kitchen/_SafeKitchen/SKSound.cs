@@ -21,13 +21,33 @@ public static class SKSound
         voice = host.AddComponent<AudioSource>();
         voice.playOnAwake = false;
         voice.volume = 1f;
-        loops = new AudioSource[3];
-        for (int i = 0; i < 3; i++)
+        loops = new AudioSource[4];   // 0=끓음 1=화구 2=화재·누출 3=음악
+        for (int i = 0; i < 4; i++)
         {
             loops[i] = host.AddComponent<AudioSource>();
             loops[i].playOnAwake = false;
             loops[i].loop = true;
         }
+    }
+
+    /// 배경음악 (채널 3) — 같은 곡이면 유지, 파일 없으면 무시
+    static string curMusic;
+    public static void Music(string name, float vol = 0.35f)
+    {
+        if (loops == null) return;
+        if (curMusic == name) { loops[3].volume = vol; return; }
+        var c = Load(name);
+        if (c == null) return;
+        curMusic = name;
+        loops[3].clip = c;
+        loops[3].volume = vol;
+        loops[3].Play();
+    }
+
+    public static void StopMusic()
+    {
+        curMusic = null;
+        if (loops != null) loops[3].Stop();
     }
 
     static AudioClip Load(string name)

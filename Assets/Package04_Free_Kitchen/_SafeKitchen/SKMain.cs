@@ -41,6 +41,9 @@ public static class SKIn
             case KeyCode.RightShift: return kb.rightShiftKey;
             case KeyCode.F1: return kb.f1Key;
             case KeyCode.V: return kb.vKey;
+            case KeyCode.Escape: return kb.escapeKey;
+            case KeyCode.T: return kb.tKey;
+            case KeyCode.G: return kb.gKey;
         }
         return null;
     }
@@ -220,7 +223,9 @@ public partial class SKMain : MonoBehaviour
         BuildMgUI();
         BuildAimCone();
         FpInit();
+        UxInit();
         SKSound.Init(gameObject);
+        SKSound.Music("bgm_title", 0.45f);
         SKSound.Loop(0, "amb_boil", 0.30f);
         SKSound.Loop(1, "amb_flame", 0.18f);
         // (부팅 안내는 타이틀·튜토리얼이 담당 — 대화창과 겹치는 토스트 제거)
@@ -825,7 +830,7 @@ public partial class SKMain : MonoBehaviour
         {
             if (openEv.type == "boil" && valvePivot != null) StartCoroutine(TurnValve(90f));
             if (openEv.type == "yellow") SetFlame(1, false);
-            if (openEv.type == "hose") StartCoroutine(SoapCheck());   // 밸브에 비눗물 점검 연출
+            if (openEv.type == "hose") MgStart(4);   // 비눗물 점검 미니게임 (연타)
             // 환기 계열 정답 → 창문 열림 (6초 후 자동 닫힘)
             if ((openEv.type == "boil" || openEv.type == "yellow" || openEv.type == "hood")
                 && windowOpen != null && windowClosed != null)
@@ -842,6 +847,7 @@ public partial class SKMain : MonoBehaviour
             // 콤보가 쌓일수록 정답음이 높아진다 + 펀치줌
             SKSound.Sfx("sfx_correct", 1f, Mathf.Min(1.35f, 1f + 0.06f * Mathf.Min(combo, 6)));
             PunchZoom();
+            FxCorrect();
             BadgeProgress();   // 점검왕·콤보 배지 진행
             Say(openEv.def.toast, 3f);
             StartCoroutine(Pop(openEv.node));
@@ -851,6 +857,7 @@ public partial class SKMain : MonoBehaviour
         else
         {
             openEv.retry = true;
+            FxWrong();
             SKSound.Sfx("sfx_wrong");
             Say(string.IsNullOrEmpty(ic.no) ? "다시!" : ic.no, 2.2f);
             StartCoroutine(Shake());
@@ -1004,6 +1011,7 @@ public partial class SKMain : MonoBehaviour
         qWindowOpen = false;
         CloseChoice();
         camBase = fpMode ? qvCamPos : cam.transform.position;   // FP 중엔 쿼터뷰 원위치 기준
+        SKSound.Music("bgm_danger", 0.4f);
         SKSound.Sfx("sfx_quake");
         SKSound.Sfx("sfx_blackout", 0.8f);
         SKSound.VoStop();   // 긴급 경보는 무조건 끼어듦
@@ -1540,6 +1548,7 @@ public partial class SKMain : MonoBehaviour
         pbody.localEulerAngles = new Vector3(0, pbody.localEulerAngles.y, 0);
         animState = -1;
         SKSound.StopLoop(2);
+        SKSound.Music("bgm_main", 0.3f);
         RestoreLighting();
         if (arrowGo != null) Destroy(arrowGo);
         StartCoroutine(ReopenValve());
@@ -1601,11 +1610,13 @@ public partial class SKMain : MonoBehaviour
             score += 100;
             AddFloat(player.position + new Vector3(0, 1.4f, 0), "+100 정답!");
             SKSound.Sfx("sfx_correct");
+            FxCorrect();
             Say("좋아! 불을 향해 [마우스 왼쪽] 꾹 — 좌우로 쓸면서 분사!", 4f);
         }
         else
         {
             SKSound.Sfx("sfx_wrong");
+            FxWrong();
             Say(i == 1 ? "안전핀을 먼저 뽑아야 약제가 나와!" : "소화기는 던지는 게 아니야!", 2.5f);
             StartCoroutine(Shake());
         }
@@ -1709,6 +1720,10 @@ public partial class SKMain : MonoBehaviour
         sprayAutoT = 0f; sweepAcc = 0f;
         preQ1 = false; preQ2 = false;
         quizOpen = false; quizSolved = false; spraying = false;
+        rankShown = false; if (pnRank != null) pnRank.SetActive(false);
+        if (paused) ResumeGame();
+        runBadges.Clear();
+        SKSound.Music("bgm_main", 0.3f);
         if (carryExt != null) { carryExt.SetParent(null, true); carryExt.localScale = extHomeScale; carryExt = null; }
         quakeState = 0; quakeDone = false;
         quakeScen = 0; quake2Done = false; qValveLocked = false; qWindowOpen = false;
@@ -1773,6 +1788,17 @@ public partial class SKMain : MonoBehaviour
             {
                 var cc = titleCredit.color; cc.a = 0.8f * vis; titleCredit.color = cc;
             }
+            if (titleT > 0.4f && SKIn.Down(KeyCode.G))
+            {
+                PlayerPrefs.SetInt("sktut", 0);   // 훈련 다시 받기
+            }
+            for (int si = 0; si < 3; si++)
+                if (titleT > 0.4f && SKIn.Down(si == 0 ? KeyCode.Alpha1 : si == 1 ? KeyCode.Alpha2 : KeyCode.Alpha3)
+                    && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != SCENES[si])
+                {
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(SCENES[si]);
+                    return;
+                }
             if (titleT > 0.4f && (SKIn.Down(KeyCode.Space) || SKIn.Down(KeyCode.Return)))
             {
                 titleOpen = false;
@@ -1781,14 +1807,22 @@ public partial class SKMain : MonoBehaviour
                 stageT = 0;
                 spawnT = 1.5f;
                 SKSound.Sfx("sfx_correct", 0.7f);
-                if (!tutDone) TutStart();
-                else Say("위험에 다가가 스페이스! 물음표를 따라가!", 4f);
+                SKSound.Music("bgm_main", 0.3f);
+                // 수료 이력이 있으면 훈련 생략하고 바로 실전 (G로 재수강 가능)
+                bool tutDoneBefore = PlayerPrefs.GetInt("sktut", 0) == 1;
+                if (!tutDone && !tutDoneBefore) TutStart();
+                else { tutDone = true; Say("위험에 다가가 스페이스! 물음표를 따라가!", 4f); }
             }
             return;
         }
 
         // 튜토리얼 건너뛰기
         if (TutActive && SKIn.Down(KeyCode.F1)) { TutFinish(true); }
+
+        // 랭크·일시정지 (모달 입력 우선)
+        if (RankUpdate()) return;
+        if (SKIn.Down(KeyCode.Escape)) TogglePause();
+        if (PauseUpdate()) return;
 
         // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리
         if (SKIn.Down(KeyCode.V)) ToggleFp();
@@ -1831,7 +1865,7 @@ public partial class SKMain : MonoBehaviour
             else if (!over && openEv == null && !quizOpen && quakeState == 2 && quakeScen == 2
                 && !qWindowOpen && NearQuakeWindow())
             {
-                OpenQuakeWindow();   // 누출: 창문 앞 스페이스 = 열기
+                MgStart(3);   // 누출: 창문 열기 미니게임 (연타)
             }
         }
         // 소화기 좌클릭 홀드: 화재 진압 페이즈·소화 훈련에만 분사 — 평상시엔 장난 금지 교육 경고
@@ -1896,6 +1930,7 @@ public partial class SKMain : MonoBehaviour
             }
             }
         }
+        if (moving) StepSfx(dt, sprinting);
         if (hasAnim)
         {
             // 리깅 애니메이션: 정지=대기, 이동=걷기, 쉬프트·지진 중=뛰기
@@ -1967,8 +2002,7 @@ public partial class SKMain : MonoBehaviour
             if (stageT > SKData.DEMO_DUR)
             {
                 over = true;
-                CloseChoice();
-                Say("데모 종료! 점수 " + score + " — R키로 재시작", 999f);
+                ShowRank();
             }
             spawnT -= dt;
             if (spawnT <= 0f) { TrySpawn(); spawnT = 4f + Random.value * 2f; }

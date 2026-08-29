@@ -24,6 +24,7 @@ public partial class SKMain
         if (BadgeHas(i)) { SKSound.Sfx("sfx_badge", 0.55f); return; }
         PlayerPrefs.SetInt("skb" + i, 1);
         PlayerPrefs.Save();
+        runBadges.Add(i);   // 랭크 화면용
         SKSound.Sfx("sfx_badge");
         if (i == 5) SKSound.Vo("vo_badge_all");
         StartCoroutine(BadgePopCo(i));
@@ -116,5 +117,24 @@ public partial class SKMain
             if (spr != null) { img.sprite = spr; img.preserveAspect = true; }
             img.color = BadgeHas(i) ? Color.white : new Color(0.08f, 0.10f, 0.14f, 0.45f);
         }
+        // 씬 선택 + 훈련 재수강 안내
+        var sgo = new GameObject("scenesel");
+        sgo.transform.SetParent(root, false);
+        var st = sgo.AddComponent<Text>();
+        st.font = font; st.fontSize = 15;
+        string cur = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        var sb2 = new System.Text.StringBuilder();
+        for (int i = 0; i < 3; i++)
+            sb2.Append((cur == SCENES[i] ? "▶" : "") + "[" + (i + 1) + "] " + SCENE_NAMES[i] + "   ");
+        sb2.Append(PlayerPrefs.GetInt("sktut", 0) == 1 ? "· [G] 훈련 다시 받기" : "");
+        st.text = sb2.ToString();
+        st.color = new Color(0.25f, 0.30f, 0.35f, 0.85f);
+        st.alignment = TextAnchor.MiddleCenter;
+        st.horizontalOverflow = HorizontalWrapMode.Overflow;
+        var strt = sgo.GetComponent<RectTransform>();
+        strt.anchorMin = strt.anchorMax = new Vector2(0.5f, 0f);
+        strt.pivot = new Vector2(0.5f, 0f);
+        strt.anchoredPosition = new Vector2(0, 186);
+        strt.sizeDelta = new Vector2(900, 24);
     }
 }

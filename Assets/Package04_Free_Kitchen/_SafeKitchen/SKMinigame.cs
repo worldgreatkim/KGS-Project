@@ -16,6 +16,7 @@ public partial class SKMain
     GameObject pnMg, mgFallback, mgRingGo, mgNeedleGo;
     Image mgBodyImg, mgLeverImg, mgGaugeFill;
     RectTransform mgLeverRt, mgNeedleRt, mgFillRt;
+    RectTransform mgBoxOutRt, mgBoxInRt, mgTitleCtRt, mgGaugeBgRt, mgHintCtRt;   // 콤팩트 레이아웃 전환용
     Text mgTitle, mgHint;
 
     // 분사(홀드)·쓸기
@@ -102,9 +103,9 @@ public partial class SKMain
         dimImg.color = new Color(0.06f, 0.09f, 0.13f, 0.60f);
 
         Image im;
-        CPanel(pnMg.transform, 0, 14, 486, 486, new Color(0.93f, 0.89f, 0.79f), out im);   // 크림 테두리
-        CPanel(pnMg.transform, 0, 14, 474, 474, new Color(0.10f, 0.13f, 0.19f, 0.97f), out im);
-        CPanel(pnMg.transform, 0, 216, 420, 42, Color.clear, out im);
+        mgBoxOutRt = CPanel(pnMg.transform, 0, 14, 486, 486, new Color(0.93f, 0.89f, 0.79f), out im);   // 크림 테두리
+        mgBoxInRt = CPanel(pnMg.transform, 0, 14, 474, 474, new Color(0.10f, 0.13f, 0.19f, 0.97f), out im);
+        mgTitleCtRt = CPanel(pnMg.transform, 0, 216, 420, 42, Color.clear, out im);
         mgTitle = Label(im.transform, "밸브 잠그기!", 27, YELLOW, TextAnchor.MiddleCenter, true);
 
         // 축 지점 P: 일러스트 몸체의 상단 스템 위치 (레버·링·바늘 공용 중심)
@@ -149,12 +150,12 @@ public partial class SKMain
         mgLeverRt = lrt;
 
         // 게이지
-        CPanel(pnMg.transform, 0, -176, 344, 26, new Color(1, 1, 1, 0.20f), out im);
+        mgGaugeBgRt = CPanel(pnMg.transform, 0, -176, 344, 26, new Color(1, 1, 1, 0.20f), out im);
         mgFillRt = CPanel(pnMg.transform, -170, -176, 10, 18, MINT, out mgGaugeFill);
         mgFillRt.pivot = new Vector2(0f, 0.5f);
         mgFillRt.anchoredPosition = new Vector2(-170, -176);
 
-        CPanel(pnMg.transform, 0, -204, 460, 32, Color.clear, out im);
+        mgHintCtRt = CPanel(pnMg.transform, 0, -204, 460, 32, Color.clear, out im);
         mgHint = Label(im.transform, "", 20, Color.white, TextAnchor.MiddleCenter, true);
         // 타이밍 링·바늘은 레버 위에 그려 초록 구간이 가려지지 않게
         mgRingGo.transform.SetAsLastSibling();
@@ -191,6 +192,19 @@ public partial class SKMain
         if (mgLeverRt != null) mgLeverRt.localRotation = Quaternion.Euler(0, 0, ang);
     }
 
+    /// 패널 레이아웃 — 밸브(그림 有)=정사각 486, 창문·비눗물(그림 無)=콤팩트 260
+    void MgLayout(bool tall)
+    {
+        if (mgBoxOutRt == null) return;
+        float bh = tall ? 486f : 260f;
+        mgBoxOutRt.sizeDelta = new Vector2(486f, bh);
+        mgBoxInRt.sizeDelta = new Vector2(474f, bh - 12f);
+        mgTitleCtRt.anchoredPosition = new Vector2(0, tall ? 216f : 100f);
+        mgGaugeBgRt.anchoredPosition = new Vector2(0, tall ? -176f : -22f);
+        mgFillRt.anchoredPosition = new Vector2(-170f, tall ? -176f : -22f);
+        mgHintCtRt.anchoredPosition = new Vector2(0, tall ? -204f : -62f);
+    }
+
     // ---------- 미니게임 진행 ----------
     void MgStart(int kind)
     {
@@ -207,8 +221,24 @@ public partial class SKMain
         SetLever(0f);
         mgRingGo.SetActive(false);
         mgNeedleGo.SetActive(false);
-        mgTitle.text = "밸브 잠그기!";
-        mgHint.text = kind == 2 ? "[SPACE] 연타! 가스가 새고 있다!" : "[SPACE] 연타로 레버를 돌려라!";
+        bool valveArt = kind <= 2;
+        // 창문·비눗물 미니게임은 밸브 그림 숨김 + 콤팩트 패널
+        mgLeverImg.gameObject.SetActive(valveArt);
+        if (!valveArt) { mgFallback.SetActive(false); mgBodyImg.gameObject.SetActive(false); }
+        else
+        {
+            bool hasArt = mgBodyImg.sprite != null;
+            mgBodyImg.gameObject.SetActive(hasArt);
+            mgFallback.SetActive(!hasArt);
+        }
+        MgLayout(valveArt);
+        if (kind == 3) { mgTitle.text = "창문 열기!"; mgHint.text = "[SPACE] 연타로 활짝 열어라!"; }
+        else if (kind == 4) { mgTitle.text = "비눗물 점검!"; mgHint.text = "[SPACE] 연타로 구석구석 발라라!"; }
+        else
+        {
+            mgTitle.text = "밸브 잠그기!";
+            mgHint.text = kind == 2 ? "[SPACE] 연타! 가스가 새고 있다!" : "[SPACE] 연타로 레버를 돌려라!";
+        }
         pnMg.SetActive(true);
         SKSound.Sfx("sfx_popup", 0.8f);
     }
@@ -219,10 +249,10 @@ public partial class SKMain
         {
             mgGauge = Mathf.Min(1f, mgGauge + 0.11f);
             mgLeverKick = 6f;
-            SKSound.Sfx("sfx_step", 0.5f, 1.15f + mgGauge * 0.5f);   // 래칫 틱
+            SKSound.Sfx("sfx_ratchet", 0.7f, 1.0f + mgGauge * 0.4f);   // 래칫 틱
             if (mgGauge >= 1f)
             {
-                if (mgKind == 2) MgLock(false);   // 누출: 긴박 — 타이밍 생략
+                if (mgKind >= 2) MgLock(false);   // 누출·창문·비눗물: 연타만
                 else
                 {
                     mgPhase = 1;
@@ -304,6 +334,8 @@ public partial class SKMain
         }
         else if (k == 1) ValveDone();
         else if (k == 2) LockValve2();
+        else if (k == 3) OpenQuakeWindow();
+        else if (k == 4) StartCoroutine(SoapCheck());
     }
 
     /// 시간 초과 구제·스킵용 — 후처리 없이 즉시 닫기

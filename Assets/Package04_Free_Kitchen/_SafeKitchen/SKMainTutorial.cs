@@ -297,7 +297,7 @@ public partial class SKMain
         }
         if (valvePivot != null) valvePivot.localEulerAngles = Vector3.zero;
         SKSound.VoStop();
-        if (!skipped) BadgeEarn(0);   // 소방학교 수료 배지
+        if (!skipped) { BadgeEarn(0); UnityEngine.PlayerPrefs.SetInt("sktut", 1); UnityEngine.PlayerPrefs.Save(); }   // 수료 배지 + 수료 기억
         pnTut.SetActive(false);
         tutStep = -1;
         tutDone = true;

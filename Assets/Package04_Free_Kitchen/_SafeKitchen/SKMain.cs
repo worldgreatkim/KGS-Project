@@ -187,7 +187,7 @@ public partial class SKMain : MonoBehaviour
                 foreach (var r in rs) b.Encapsulate(r.bounds);
                 // MOD 탁상 버너는 화구가 좌우 2구 — 김·불꽃을 서쪽 화구 중심에
                 boilPos = modKit
-                    ? new Vector3(b.center.x - 0.30f, b.max.y + 0.08f, b.center.z)
+                    ? new Vector3(b.center.x - 0.36f, b.max.y + 0.08f, b.center.z)
                     : new Vector3(b.center.x - 0.25f, b.max.y + 0.16f, b.center.z - 0.05f);
             }
             else boilPos = stv.position;   // 빈 앵커 노드(StoveAnchor)면 그 위치 그대로
@@ -219,9 +219,9 @@ public partial class SKMain : MonoBehaviour
                 if (t.name.Contains("FireExtinguisher")) extList.Add(t);
         // 화구 불꽃: 냄비 아래 + 빈 화구 (yellow 위험이 이 화구를 노랗게 만든다)
         // MOD 씬은 모듈 스토브의 화구 트레이가 높아(상판 정렬 보정) 불꽃도 따라 올림
-        float flameY = modKit ? 1.42f : 1.28f;
+        float flameY = modKit ? 1.46f : 1.28f;
         BuildFlame(0, new Vector3(boilPos.x, flameY, boilPos.z - 0.05f));
-        BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.30f : 0f), flameY, 1.9f));
+        BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.39f : 0f), flameY, 1.9f));
         SetFlame(0, false);
         SetFlame(1, false);
         BuildTitle();

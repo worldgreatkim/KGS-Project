@@ -52,3 +52,20 @@
 ### 실패와 수정
 - bounds 기반 안착이 냄비 여유 volume 때문에 공중부양 → 정점 실측·눈맞춤 반복으로 확정
 - 측정 중 씬 상태 혼선(플레이/에디트 왕복) — 최종 상태 재실측으로 정리
+
+## [수정] MOD 스토브 → Counter+탁상 버너 + 프라이팬 배치 — 2026-08-29 12:50
+### 프롬프트
+높이가 안맞네. 차라리 기본 counter로 바꾸고 2번째 사진 에셋을 만들어서 위에 올리는 방법이 어떨까? 그리고 싱크대에는 게임 요소로 쓸 만한게 없니? / 그럼 후라이팬 에셋도 하나 만들어서 배치해. 오버쿡2를 참고해봐
+### 조작 내역
+- refs/Mod_Burner.png(사용자 제공 탁상 버너 이미지) → Tripo image-to-model → Mod_Burner.glb. 정면 +x 실측 → rotY -90
+- ModStoveW/E 홀더 재구성(이름 유지로 코드 참조 무사): 통짜 스토브 자식 제거 → base_counter(기존 Counter 홀더 규격 복사) + top_burner(1.30×0.60×1.30, 조리대 위 안착 bMin 1.252=조리대 top 1.250)
+- FryingPan.glb: Tripo text-to-model 2회(1차 웍+굽은 손잡이 폐기 → 2차 곧은 손잡이 채택). 스토브W 동화구(그레이트 정점 실측 8.79/9.40) 위 배치 — flame(1)과 겹쳐 "빈 팬 가열" 위험 연출
+- BigPot: 스토브E 버너 서화구(20.90) 그레이트 안착
+- SKMain.cs modKit 조정: boilPos x-0.30/max.y+0.08, flameY 1.42, flame(1) x+0.30
+- ASSET_CREDITS.md: Mod_Burner·FryingPan 기록
+### 검증
+- 컴파일 Error 0. 에디트 스냅: 버너 조리대 안착(높이차 해소), 팬 화구 위, 냄비 화구 위
+- 플레이 스냅: 빈 팬 안 불꽃(yellow 위험), 냄비 김+아래 불꽃, 물음표 마커 정상
+### 실패와 수정
+- 프라이팬 1차 생성 웍 형태+위로 굽은 손잡이 → 프롬프트 보강(flat shallow/straight horizontal handle) 재생성으로 해결
+- Renderer.bounds가 Instantiate 직후 스테일 → 정점 실측(TransformPoint)으로 접시 중심·화구 중심 정렬

@@ -221,7 +221,7 @@ public partial class SKMain : MonoBehaviour
         // MOD 씬은 모듈 스토브의 화구 트레이가 높아(상판 정렬 보정) 불꽃도 따라 올림
         float flameY = modKit ? 1.46f : 1.28f;
         BuildFlame(0, new Vector3(boilPos.x, flameY, boilPos.z - 0.05f));
-        BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.39f : 0f), flameY, 1.9f));
+        BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.39f : 0f), flameY, modKit ? HzPos("yellow").z : 1.9f));
         SetFlame(0, false);
         SetFlame(1, false);
         BuildTitle();
@@ -1251,10 +1251,13 @@ public partial class SKMain : MonoBehaviour
     /// 잔불 3곳 발생 (밸브 잠근 뒤): 후보 4곳(화구 2 + 남쪽 서랍장 2)에서 랜덤 3곳 — 매판 다른 배치
     void StartFires()
     {
+        // MOD 아일랜드는 화구 z가 다르므로 HzPos의 z를 그대로 사용
+        float fz1 = IsModKit() ? HzPos("yellow").z : 1.9f;
+        float fz2 = IsModKit() ? HzPos("boil").z : 1.9f;
         var cands = new List<Vector3>
         {
-            new Vector3(HzPos("yellow").x, 1.3f, 1.9f),
-            new Vector3(HzPos("boil").x, 1.3f, 1.9f),
+            new Vector3(HzPos("yellow").x, 1.3f, fz1),
+            new Vector3(HzPos("boil").x, 1.3f, fz2),
         };
         var kroot = GameObject.Find("Kitchen");
         if (kroot != null)
@@ -1269,6 +1272,12 @@ public partial class SKMain : MonoBehaviour
                 cands.Add(new Vector3(b.center.x, b.max.y + 0.42f, b.center.z));
                 if (cands.Count >= 4) break;
             }
+        if (IsModKit())
+        {
+            // 아일랜드 C·D 조리대 위 — 소품(전자레인지·커피메이커)과 겹치지 않는 지점
+            cands.Add(new Vector3(10.35f, 1.45f, 8.2f));
+            cands.Add(new Vector3(18.75f, 1.45f, 8.2f));
+        }
         while (cands.Count < 4) cands.Add(new Vector3(6.3f + cands.Count * 2.5f, 1.35f, Pf(9.0f, 14.0f)));
         for (int i = cands.Count - 1; i > 0; i--)
         { int j = Random.Range(0, i + 1); var tmp = cands[i]; cands[i] = cands[j]; cands[j] = tmp; }

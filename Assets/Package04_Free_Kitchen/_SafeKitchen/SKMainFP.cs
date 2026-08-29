@@ -61,8 +61,18 @@ public partial class SKMain
         cam.transform.rotation = Quaternion.Euler(QV_PITCH, 180f, 0);
     }
 
-    /// 맵 버전별 위험 좌표
-    Vector3 HzPos(string key) { return bigMap ? SKData.HZ[key] : SKData.HZ_OLD[key]; }
+    /// MOD(아일랜드) 씬 판정 — 위험 좌표 세트 분기용
+    static bool IsModKit()
+    {
+        return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.EndsWith("_MOD");
+    }
+
+    /// 맵 버전별 위험 좌표 (MOD 아일랜드 > 확장 > 원본)
+    Vector3 HzPos(string key)
+    {
+        if (IsModKit()) return SKData.HZ_MOD[key];
+        return bigMap ? SKData.HZ[key] : SKData.HZ_OLD[key];
+    }
     /// 맵 버전별 좌표·수치 선택 (o=원본, n=확장)
     Vector3 Pz(Vector3 o, Vector3 n) { return bigMap ? n : o; }
     float Pf(float o, float n) { return bigMap ? n : o; }

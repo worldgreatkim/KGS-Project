@@ -181,11 +181,154 @@ public partial class SKMain
         }
         Say("텐트 안이야. 어? 가스난로가 켜져 있어!", 4f);
         yield return StartCoroutine(FadeIn());
+        StartCoroutine(TentCoDangerCo());   // 경보음 + CO 안개 축적
+    }
+
+    /// 동물의 숲식 숲속 공터 — 맵 둘레를 나무로 두르고 원경은 안개로 흐림
+    void CampBuildForest()
+    {
+        if (GameObject.Find("CampForest") != null) return;
+        var root = new GameObject("CampForest").transform;
+        string[] kinds = { "Assets/Kenney/K_tree.glb", "Assets/Kenney/K_tree-tall.glb", "Assets/Kenney/K_tree-autumn.glb" };
+        var prefabs = new List<GameObject>();
+#if UNITY_EDITOR
+        foreach (var k in kinds)
+        {
+            var p = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(k);
+            if (p != null) prefabs.Add(p);
+        }
+#endif
+        if (prefabs.Count == 0) return;
+        // 맵(가로 19.2 세로 10.8) 둘레 3중 링 — 안쪽은 성기게, 바깥은 빽빽하게
+        float cx = 10.7f, cz = 5.4f;
+        for (int ring = 0; ring < 3; ring++)
+        {
+            float rx = 13f + ring * 5.5f, rz = 9.5f + ring * 5.0f;
+            int count = 16 + ring * 8;
+            for (int i = 0; i < count; i++)
+            {
+                float a = (i / (float)count) * Mathf.PI * 2f + ring * 0.35f;
+                var pos = new Vector3(cx + Mathf.Cos(a) * rx + Random.Range(-1.4f, 1.4f), 0f,
+                                      cz + Mathf.Sin(a) * rz + Random.Range(-1.4f, 1.4f));
+                var g = Instantiate(prefabs[Random.Range(0, prefabs.Count)], root);
+                g.transform.position = pos;
+                g.transform.rotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
+                float sc = Random.Range(3.2f, 4.6f) + ring * 0.5f;
+                g.transform.localScale = Vector3.one * sc;
+                // 뒤로 갈수록 하늘색에 물들게 (원경 페이드)
+                float fade = 0.18f * ring;
+                foreach (var r in g.GetComponentsInChildren<Renderer>())
+                {
+                    var m = r.material;
+                    m.color = Color.Lerp(m.color, new Color(0.60f, 0.82f, 0.95f), fade);
+                }
+            }
+        }
+        // 안개: 원경이 하늘색으로 녹아 경계가 사라짐
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = new Color(0.60f, 0.82f, 0.95f);
+        RenderSettings.fogStartDistance = 26f;
+        RenderSettings.fogEndDistance = 58f;
+        // 앰비언트: 회색 → 따뜻한 하늘빛
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.62f, 0.74f, 0.86f);
+        RenderSettings.ambientEquatorColor = new Color(0.58f, 0.62f, 0.55f);
+        RenderSettings.ambientGroundColor = new Color(0.36f, 0.40f, 0.32f);
+    }
+
+    // ---------- 텐트 안 일산화탄소 위험 연출 ----------
+    readonly List<Transform> coClouds = new List<Transform>();
+    Transform gasAlert;          // CO 경보기 (깜빡임)
+    bool coRunning;
+
+    IEnumerator TentCoDangerCo()
+    {
+        coRunning = true;
+        gasAlert = FindKitchenChild("int_alert");
+        var prefab = Resources.Load<GameObject>("VFX/GasFog");
+        float t = 0f;
+        int n = 0;
+        Renderer alertR = gasAlert != null ? gasAlert.GetComponentInChildren<Renderer>() : null;
+        Color alert0 = alertR != null ? alertR.material.color : Color.white;
+        float beep = 0f;
+        while (coRunning && inTent)
+        {
+            t += Time.deltaTime;
+            beep -= Time.deltaTime;
+            // 경보음 (1.1초 간격) + 경보기 붉은 점멸
+            if (beep <= 0f)
+            {
+                beep = 1.1f;
+                SKSound.Sfx("sfx_acha", 0.55f, 1.5f);
+                if (alertR != null) StartCoroutine(AlertBlink(alertR, alert0));
+            }
+            // CO 안개 축적 (2.2초마다 1덩이, 최대 7)
+            if (prefab != null && n < 7 && t > 1.0f + n * 2.2f)
+            {
+                var pos = tentInterior.position + new Vector3(
+                    Random.Range(-3.2f, 3.2f), 0.35f, Random.Range(-2.2f, 2.2f));
+                var g = Instantiate(prefab);
+                g.name = "co_fog" + n;
+                g.transform.position = pos;
+                var ps = g.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    var m = ps.main;
+                    m.startSize = new ParticleSystem.MinMaxCurve(1.5f, 2.6f);
+                    m.startColor = new ParticleSystem.MinMaxGradient(
+                        new Color(0.80f, 0.66f, 0.60f, 0.42f), new Color(0.66f, 0.52f, 0.48f, 0.32f));
+                    m.maxParticles = 50;
+                    var sh = ps.shape; sh.scale = new Vector3(2.2f, 0.6f, 2.2f);
+                    var em = ps.emission; em.rateOverTime = 8f;
+                    ps.Clear(); ps.Play();
+                }
+                coClouds.Add(g.transform);
+                n++;
+                if (n == 3) Say("일산화탄소 경보기가 울려! 무색무취라 눈엔 안 보여 — 위험해!", 4f);
+            }
+            yield return null;
+        }
+    }
+
+    IEnumerator AlertBlink(Renderer r, Color c0)
+    {
+        if (r == null) yield break;
+        r.material.color = new Color(0.95f, 0.25f, 0.20f);
+        yield return new WaitForSeconds(0.22f);
+        if (r != null) r.material.color = c0;
+    }
+
+    /// 환기 성공 → CO 안개가 빨려나가며 소멸 + 경보 정지
+    IEnumerator CoClearCo()
+    {
+        coRunning = false;
+        Vector3 to = tentInterior != null ? tentInterior.position + new Vector3(0, 3.5f, 3.5f) : Vector3.zero;
+        var starts = new List<Vector3>();
+        var scales = new List<Vector3>();
+        foreach (var c in coClouds) { starts.Add(c != null ? c.position : Vector3.zero); scales.Add(c != null ? c.localScale : Vector3.one); }
+        float t = 0f;
+        while (t < 1.1f)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / 1.1f);
+            for (int i = 0; i < coClouds.Count; i++)
+            {
+                var c = coClouds[i];
+                if (c == null) continue;
+                c.position = Vector3.Lerp(starts[i], to, Mathf.SmoothStep(0f, 1f, k));
+                c.localScale = scales[i] * (1f - 0.85f * k);
+            }
+            yield return null;
+        }
+        foreach (var c in coClouds) if (c != null) Destroy(c.gameObject);
+        coClouds.Clear();
     }
 
     /// 퀴즈 정답 후: 밖으로 복귀 + 텐트 열림 + 난로가 텐트 앞에 나와 있음
     IEnumerator TentExitCo()
     {
+        yield return StartCoroutine(CoClearCo());   // CO 안개 배출 + 경보 정지
         yield return StartCoroutine(FadeOut());
         inTent = false;
         // 난로를 텐트 앞으로 이동 (실외 오브젝트로 재부모)
@@ -560,12 +703,13 @@ public partial class SKMain
             // BuildOuterDeco가 덮어쓴 배경을 야외 톤으로 (첫 프레임 1회)
             campSkySet = true;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.55f, 0.78f, 0.92f);
+            cam.backgroundColor = new Color(0.60f, 0.82f, 0.95f);
             // 외곽 마루(주방용 다크우드) → 짙은 숲 초록
             var of = GameObject.Find("outer_floor");
             if (of != null)
                 foreach (var r in of.GetComponentsInChildren<Renderer>())
                     if (r.material != null) r.material.color = new Color(0.24f, 0.42f, 0.26f);
+            CampBuildForest();
         }
         if (videoOpen)
         {

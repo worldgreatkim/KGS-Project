@@ -61,5 +61,6 @@
 - Models3D/FryingPan.glb (프라이팬): Tripo text-to-model 직접 생성 (2026-08-29, 프롬프트: 오버쿡드풍 네이비 팬+크림 손잡이). 빈 팬 가열 위험 연출 소품
 - Models3D/CampTent·CampFirepit·CampButaneCan·CampTable·CampBurner.glb (캠핑 킷 5종): Gemini 파생 생성(refs/Camp_*.png, 기준 Mod_Burner) → Tripo image-to-model (2026-08-30). SafeKitchen3D_CAMP 캠핑 교육 씬용 — CampBurner는 실제 휴대용 가스버너 형태 재생성본
 - Models3D/CampTentClosed.glb (닫힌 텐트): Gemini 파생 생성(기준 refs/Camp_Tent.png, 문·환기창 닫힘 상태) → Tripo image-to-model (2026-08-30). 캠핑 환기 시나리오에서 열린 텐트와 교체
+- Models3D/GasAlert.glb (일산화탄소 경보기): Gemini 생성(refs/Gas_Alert.png) → Tripo image-to-model (2026-08-31). 텐트 실내 CO 위험 연출용
 - refs/Camp_GrassTile.png: 캠핑장 잔디 바닥 텍스처 — Gemini 생성 (2026-08-30)
 - Models3D/SafeBasket.glb (안전지대 보관 바구니): Gemini 파생 생성(기준: refs/Mod_Burner.png, 원본 refs/SafeBasket.png·SafeZone.png) → Tripo image-to-model (2026-08-30). 안전지대 매트 위 배치 — 위험물 보관 행동요령 시각화

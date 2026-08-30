@@ -67,3 +67,6 @@
 - Models3D/int_gable·int_sideL·int_sideR.asset + mat_ac_canvas·_bk·mat_ac_pole.mat: 텐트 실내 A프레임(박공 삼각벽·경사 캔버스) — 코드로 절차 생성 (외부 에셋 아님, 2026-08-31)
 - Models3D/af_*.asset + mat_ac_canvas_rf·_sd·mat_ac_flap·mat_ac_doorway·mat_ac_deck.mat: 캠핑장 진입 텐트(박공 정면·출입구·양옆 창문·문짝) — 코드로 절차 생성 (외부 에셋 아님, 2026-08-31)
 - Models3D/CampTentHouse·CampTentHouseDoor·CampTentHouseOpen.glb (박공 텐트 3단 상태): Gemini 파생 생성(기준 refs/Camp_TentClosed.png → 박공 형태 변형 → 문·창 상태만 순차 수정, refs/Camp_TentHouse*.png) → Tripo image-to-model (2026-08-31). 캠핑 진입 텐트 — 문닫+창닫 / 문열+창닫 / 문열+창열. gltf-transform 다이어트 15MB→5.5MB
+- Models3D/CampTentBody·CampTentBodyOpen·CampTentDoor.glb (캠핑 진입 텐트 본체·환기본체·문짝): Gemini 파생 생성(refs/Camp_TentBody*.png, Camp_TentDoor.png — Camp_TentHouse.png에서 한 번에 한 요소씩만 변형) → **Tripo 웹 v3.1 HD 수동 생성**(API 크레딧 소진, 동현님 직접 생성 후 전달) (2026-08-31).
+  gltf-transform 감량 57MB→5.1MB(삼각형 193만→15만), 텍스처 2048. 문짝은 좌우 절반으로 분할해 td_L/td_R.asset 생성.
+  머티리얼 밝기 보정: 기존 CampTent.glb 캔버스 밝기(144.2) 기준 Body 0.916 / BodyOpen 0.811 / Door 채널별(0.872,0.834,0.970)

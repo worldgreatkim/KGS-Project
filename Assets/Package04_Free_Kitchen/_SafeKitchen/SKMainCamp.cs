@@ -176,7 +176,8 @@ public partial class SKMain
         pbody.rotation = Quaternion.Euler(0, 180f, 0);                       // 텐트 쪽(−Z)을 향해
         // 문이 먼저 양옆으로 열린다
         SKSound.Sfx("sfx_window", 0.55f);
-        if (tentHouseDoor != null) yield return StartCoroutine(TentPhaseCo(tentHouseDoor));
+        if (doorL != null) yield return StartCoroutine(DoorSetCo(true, 0.45f));
+        else if (tentHouseDoor != null) yield return StartCoroutine(TentPhaseCo(tentHouseDoor));
         else yield return StartCoroutine(FlapSetCo(true, 0.40f));
         campWalking = true;
         float wt = 0f, wdur = 1.45f;
@@ -189,8 +190,8 @@ public partial class SKMain
             yield return null;
         }
         campWalking = false;
-        // 절차 텐트일 때만 뒤에서 문을 닫는다 (GLB 3단 상태는 '문 열림'을 유지)
-        if (tentHouseDoor == null) StartCoroutine(FlapSetCo(false, 0.35f));
+        // 절차 텐트일 때만 뒤에서 문을 닫는다 (GLB 방식은 '문 열림'을 유지)
+        if (doorL == null && tentHouseDoor == null) StartCoroutine(FlapSetCo(false, 0.35f));
 
         // 2) 암전 (플레이어는 이미 텐트에 가려져 보이지 않는다)
         yield return StartCoroutine(FadeOut());
@@ -637,6 +638,14 @@ public partial class SKMain
     /// 없으면 예전 방식(닫힌 텐트 → 열린 텐트 GLB 교체)로 폴백
     void CampSwapTentOpen()
     {
+        // 본체+문짝 방식: 창이 열린 본체로 즉시 교체(바람 VFX가 순간을 덮는다) + 문은 계속 열린 채
+        if (tentBody != null && tentBodyOpen != null)
+        {
+            tentBody.gameObject.SetActive(false);
+            tentBodyOpen.gameObject.SetActive(true);
+            StartCoroutine(DoorSetCo(true, 0.4f));
+            return;
+        }
         if (tentHouseOpen != null) { StartCoroutine(TentPhaseCo(tentHouseOpen)); return; }
         if (flapL != null && flapR != null) { StartCoroutine(FlapOpenCo()); return; }
         if (tentClosed == null || tentOpen == null) return;
@@ -645,6 +654,36 @@ public partial class SKMain
 
     Transform flapL, flapR, winL, winR;
     Transform tentHouse, tentHouseDoor, tentHouseOpen;   // 문닫·문열(창닫)·문열+창열
+    Transform tentBody, tentBodyOpen, doorL, doorR;      // 본체(창닫/창열) + 좌우로 갈린 문짝
+    float doorW0 = 1f;                                   // 문짝의 닫힘 상태 가로 스케일
+
+    /// k=1 완전히 닫힘, k=0.10 걷혀 사라짐. 각 문짝의 원점이 바깥 기둥이라 기둥 쪽으로 접힌다
+    void DoorApply(float k, float yaw)
+    {
+        if (doorL == null || doorR == null) return;
+        var sl = doorL.localScale; var sr = doorR.localScale;
+        doorL.localScale = new Vector3(doorW0 * k, sl.y, sl.z);
+        doorR.localScale = new Vector3(doorW0 * k, sr.y, sr.z);
+        doorL.localRotation = Quaternion.Euler(0, yaw, 0);
+        doorR.localRotation = Quaternion.Euler(0, -yaw, 0);
+    }
+
+    IEnumerator DoorSetCo(bool open, float dur)
+    {
+        if (doorL == null || doorR == null) yield break;
+        float k0 = doorL.localScale.x / doorW0, k1 = open ? 0.10f : 1f;
+        float y0 = doorL.localEulerAngles.y; if (y0 > 180f) y0 -= 360f;
+        float y1 = open ? 22f : 0f;
+        float t = 0f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
+            DoorApply(Mathf.Lerp(k0, k1, u), Mathf.Lerp(y0, y1, u));
+            yield return null;
+        }
+        DoorApply(k1, y1);
+    }
 
     /// 3단 상태 텐트를 to 상태로 교체 — 지금 켜져 있는 것을 찾아 팝 연출로 넘긴다
     IEnumerator TentPhaseCo(Transform to)
@@ -740,7 +779,23 @@ public partial class SKMain
     /// 시작 상태 정리 — 닫힌 텐트 노출, 열린 텐트 숨김 (에셋 준비 전엔 무동작)
     void CampTentInitState()
     {
-        // 1순위: 3단 상태 GLB 텐트 (문닫·문열·문열+창열)
+        // 1순위: 본체 + 분리된 문짝 (본체는 그대로 두고 문짝만 걷히므로 화면이 튀지 않는다)
+        tentBody = FindKitchenChild("C_TentBody");
+        tentBodyOpen = FindKitchenChild("C_TentBodyOpen");
+        doorL = FindKitchenChild("C_TentDoorL");
+        doorR = FindKitchenChild("C_TentDoorR");
+        if (tentBody != null && tentBodyOpen != null && doorL != null && doorR != null)
+        {
+            doorW0 = doorL.localScale.x;
+            tentBody.gameObject.SetActive(true);
+            tentBodyOpen.gameObject.SetActive(false);
+            doorL.gameObject.SetActive(true);
+            doorR.gameObject.SetActive(true);
+            DoorApply(1f, 0f);
+            return;
+        }
+
+        // 2순위: 3단 상태 GLB 텐트 (문닫·문열·문열+창열)
         tentHouse = FindKitchenChild("C_TentHouse");
         tentHouseDoor = FindKitchenChild("C_TentHouseDoor");
         tentHouseOpen = FindKitchenChild("C_TentHouseOpen");

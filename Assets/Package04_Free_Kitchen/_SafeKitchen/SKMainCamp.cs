@@ -647,6 +647,8 @@ public partial class SKMain
             // 위험한 '완전 개방'(여유 0)을 아예 하지 않아도 된다
             if (doorL != null) doorL.gameObject.SetActive(false);
             if (doorR != null) doorR.gameObject.SetActive(false);
+            // 검은 가림막을 걷어 텐트 안이 들여다보이게 (환기했다는 시각적 보상)
+            if (tentDark != null) tentDark.gameObject.SetActive(false);
             return;
         }
         if (tentHouseOpen != null) { StartCoroutine(TentPhaseCo(tentHouseOpen)); return; }
@@ -658,26 +660,35 @@ public partial class SKMain
     Transform flapL, flapR, winL, winR;
     Transform tentHouse, tentHouseDoor, tentHouseOpen;   // 문닫·문열(창닫)·문열+창열
     Transform tentBody, tentBodyOpen, doorL, doorR;      // 본체(창닫/창열) + 좌우로 갈린 문짝
+    Transform tentDark;                                  // 출입구 뒤 검은 가림막 (환기 때 걷힌다)
     Vector3 doorL0, doorR0;                              // 문짝 닫힘 위치 (씬에 배치된 값)
+    float doorWL0 = 1f, doorWR0 = 1f;                    // 문짝 닫힘 가로 스케일
 
     // 문짝은 천 표면보다 뒤에 있어, 옆으로 밀면 텐트 천에 가려 사라진다.
     // 캐릭터가 지나갈 만큼만 열면 되므로 0.45 — 천에 가려지는 한계(0.69)까지 0.24 여유.
     // (열린 폭 0.86 vs 캐릭터 충돌 폭 0.52)
-    const float DOOR_SLIDE = 0.45f;
+    // 옆으로 밀어 천 뒤에 숨기는 방식은 구조적으로 불가능하다:
+    // 텐트가 돔이라 옆으로 갈수록 천이 뒤로 물러나는데 문짝은 두께 24cm의 평평한 판이라,
+    // '가려지려면 뒤로 / 가장자리가 새지 않으려면 앞으로' 가 동시에 성립하지 않는다.
+    // → 문짝을 구멍 안에 둔 채 폭만 줄여 각자 기둥 쪽으로 걷히게 한다 (최초 스케치안).
+    const float DOOR_OPEN_W = 0.10f;
 
-    /// u=0 닫힘, u=1 열림. 화면에서 문이 비스듬히 움직이지 않도록 **월드 X 축으로만** 민다
-    /// (문짝의 로컬 X는 정면 기울기 16°만큼 z 성분이 섞여 있어 대각선으로 보인다)
+    /// u=0 닫힘, u=1 열림. 각 문짝의 원점이 바깥 기둥이라 폭을 줄이면 기둥 쪽으로 접힌다
     void DoorSlide(float u)
     {
         if (doorL == null || doorR == null) return;
-        doorL.position = doorL0 + Vector3.left * (DOOR_SLIDE * u);
-        doorR.position = doorR0 + Vector3.right * (DOOR_SLIDE * u);
+        float k = Mathf.Lerp(1f, DOOR_OPEN_W, u);
+        var sl = doorL.localScale; var sr = doorR.localScale;
+        doorL.localScale = new Vector3(doorWL0 * k, sl.y, sl.z);
+        doorR.localScale = new Vector3(doorWR0 * k, sr.y, sr.z);
+        doorL.position = doorL0;
+        doorR.position = doorR0;
     }
 
     IEnumerator DoorSetCo(bool open, float dur)
     {
         if (doorL == null || doorR == null) yield break;
-        float u0 = Vector3.Distance(doorL.position, doorL0) / DOOR_SLIDE;
+        float u0 = Mathf.InverseLerp(1f, DOOR_OPEN_W, doorL.localScale.x / Mathf.Max(0.0001f, doorWL0));
         float u1 = open ? 1f : 0f;
         float t = 0f;
         while (t < dur)
@@ -793,6 +804,10 @@ public partial class SKMain
             // 배치(회전·스케일)는 씬 값을 그대로 쓰고 위치만 기억한다 — 코드가 배치를 덮어쓰지 않게
             doorL0 = doorL.position;
             doorR0 = doorR.position;
+            doorWL0 = doorL.localScale.x;
+            doorWR0 = doorR.localScale.x;
+            tentDark = FindKitchenChild("C_TentDark");
+            if (tentDark != null) tentDark.gameObject.SetActive(true);
             tentBody.gameObject.SetActive(true);
             tentBodyOpen.gameObject.SetActive(false);
             doorL.gameObject.SetActive(true);

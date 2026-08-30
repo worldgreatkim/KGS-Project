@@ -378,3 +378,22 @@ Camp_ButaneCan, Camp_Firepit, Camp_GrassTile, Camp_Table, Camp_Tent 우리 게�
 ### 실패와 수정
 - 1차 시도: 52° 쿼터뷰 유지 → 위에서 내려다봐 박공 벽이 프레임 밖으로 밀리고 용마루가 화면 중앙을 세로로 관통. 시선을 34°로 낮추고 용마루를 뒤쪽 절반만 남겨 해결
 - 용마루 봉 끝이 박공 꼭짓점 위로 삐져나옴 → y를 APEX-0.09로 내려 정리
+
+## [수정] 콘솔 경고 정리 — 폐기 API 6건·영상 인코딩 2건 — 2026-08-31 02:45
+### 프롬프트
+(콘솔 스크린샷 첨부)
+> 맥락: Unity 콘솔에 남아 있던 경고 목록을 캡처해 전달 — 원인 파악과 정리 요청
+### 조작 내역
+- CS0618 폐기 API 6건(3곳): `FindObjectsByType<GameObject>(FindObjectsSortMode.None)` → `FindObjectsByType<GameObject>()`
+  · SKMain.cs:1743(ResetGame 지진 잔재 정리) · SKMainTutorial.cs:288, 308(훈련 연습 불 정리)
+  · Unity 6.5에서 FindObjectsSortMode 인자 오버로드가 폐기됨. 비활성 제외 기본값은 동일해 동작 변화 없음
+- Resources/UI/MainVideo.mp4 재인코딩(ffmpeg): High 프로파일·색 메타데이터 없음 → **Constrained Baseline + bt709 명시**, CFR 24fps, 미사용 AAC 트랙 제거
+  · "Unexpected timestamp values"(타임스탬프 보정) · "Color primaries 0 is unknown"(색 시프트 위험) 두 경고의 원인
+  · 1280×720 / 240프레임 / 10.0초 동일, 2.54MB → 3.01MB (Baseline은 B프레임 미지원)
+- MCP 포트 경고(6407→6404→6408)는 MCP-for-Unity 툴링 로그 — 게임 코드와 무관, 조치 없음
+### 검증
+- refresh 후 read_console(error+warning): CS0618 6건 전부 소멸, 영상 경고 2건 소멸. 남은 항목은 MCP 포트 로그뿐
+- 원본 대비 PSNR y:45.64 average:46.44 dB — 육안 무손실
+- 플레이 진입 후 타이틀 스냅: 키비주얼 영상 정상 재생, 색 이상 없음
+### 실패와 수정
+- ffmpeg `-fps_mode` 미지원 빌드 → `-vsync cfr`로 대체

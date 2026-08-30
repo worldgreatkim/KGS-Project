@@ -1740,7 +1740,7 @@ public partial class SKMain : MonoBehaviour
         stageT = 0; spawnT = 1.5f; over = false;
         player.position = Pz(new Vector3(6f, 0f, 6.2f), new Vector3(12f, 0f, 8.5f));
         // 지진 상태 초기화
-        foreach (var go in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+        foreach (var go in FindObjectsByType<GameObject>())
             if (go.name.StartsWith("quake_") || go.name == "guide_arrow" || go.name == "spray")
                 Destroy(go);
         firePsL.Clear(); fireSmokeL.Clear(); fireLightL.Clear(); firePosL.Clear(); fireOutL.Clear(); fireHpL.Clear();

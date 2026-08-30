@@ -285,7 +285,7 @@ public partial class SKMain
             if (allOut && !spraying && !tutTyping)
             {
                 // 연습 불 정리
-                foreach (var go in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+                foreach (var go in FindObjectsByType<GameObject>())
                     if (go.name.StartsWith("quake_fire")) Destroy(go, 2.5f);
                 firePsL.Clear(); fireSmokeL.Clear(); fireLightL.Clear(); firePosL.Clear(); fireOutL.Clear(); fireHpL.Clear();
                 tutFireLit = false;
@@ -305,7 +305,7 @@ public partial class SKMain
         foreach (var hz in hazards) Destroy(hz.node);
         hazards.Clear();
         CloseChoice();
-        foreach (var go in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+        foreach (var go in FindObjectsByType<GameObject>())
             if (go.name.StartsWith("quake_fire") || go.name == "guide_arrow" || go.name == "spray") Destroy(go);
         firePsL.Clear(); fireSmokeL.Clear(); fireLightL.Clear(); firePosL.Clear(); fireOutL.Clear(); fireHpL.Clear();
         tutFireLit = false;

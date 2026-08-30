@@ -176,7 +176,7 @@ public partial class SKMain
         pbody.rotation = Quaternion.Euler(0, 180f, 0);                       // 텐트 쪽(−Z)을 향해
         // 문이 먼저 양옆으로 열린다
         SKSound.Sfx("sfx_window", 0.55f);
-        if (doorL != null) yield return StartCoroutine(DoorSetCo(true, 0.45f));
+        if (doorL != null) StartCoroutine(DoorSetCo(true, 0.95f));   // 걷기와 동시에 갈라진다
         else if (tentHouseDoor != null) yield return StartCoroutine(TentPhaseCo(tentHouseDoor));
         else yield return StartCoroutine(FlapSetCo(true, 0.40f));
         campWalking = true;
@@ -643,7 +643,10 @@ public partial class SKMain
         {
             tentBody.gameObject.SetActive(false);
             tentBodyOpen.gameObject.SetActive(true);
-            StartCoroutine(DoorSetCo(true, 0.4f));
+            // 문짝은 통째로 끈다 — 바람 VFX가 터지는 순간이라 사라지는 게 보이지 않고,
+            // 위험한 '완전 개방'(여유 0)을 아예 하지 않아도 된다
+            if (doorL != null) doorL.gameObject.SetActive(false);
+            if (doorR != null) doorR.gameObject.SetActive(false);
             return;
         }
         if (tentHouseOpen != null) { StartCoroutine(TentPhaseCo(tentHouseOpen)); return; }
@@ -655,34 +658,34 @@ public partial class SKMain
     Transform flapL, flapR, winL, winR;
     Transform tentHouse, tentHouseDoor, tentHouseOpen;   // 문닫·문열(창닫)·문열+창열
     Transform tentBody, tentBodyOpen, doorL, doorR;      // 본체(창닫/창열) + 좌우로 갈린 문짝
-    float doorW0 = 1f;                                   // 문짝의 닫힘 상태 가로 스케일
+    Vector3 doorL0, doorR0;                              // 문짝 닫힘 위치 (씬에 배치된 값)
 
-    /// k=1 완전히 닫힘, k=0.10 걷혀 사라짐. 각 문짝의 원점이 바깥 기둥이라 기둥 쪽으로 접힌다
-    void DoorApply(float k, float yaw)
+    // 문짝은 천 표면보다 뒤에 있어, 옆으로 밀면 텐트 천에 가려 사라진다.
+    // 캐릭터가 지나갈 만큼만 열면 되므로 0.45 — 천에 가려지는 한계(0.69)까지 0.24 여유.
+    // (열린 폭 0.86 vs 캐릭터 충돌 폭 0.52)
+    const float DOOR_SLIDE = 0.45f;
+
+    /// u=0 닫힘, u=1 열림. 정면이 16° 기울어 있으므로 각 문짝의 로컬 X 방향으로 민다
+    void DoorSlide(float u)
     {
         if (doorL == null || doorR == null) return;
-        var sl = doorL.localScale; var sr = doorR.localScale;
-        doorL.localScale = new Vector3(doorW0 * k, sl.y, sl.z);
-        doorR.localScale = new Vector3(doorW0 * k, sr.y, sr.z);
-        doorL.localRotation = Quaternion.Euler(0, yaw, 0);
-        doorR.localRotation = Quaternion.Euler(0, -yaw, 0);
+        doorL.position = doorL0 - doorL.right * (DOOR_SLIDE * u);
+        doorR.position = doorR0 + doorR.right * (DOOR_SLIDE * u);
     }
 
     IEnumerator DoorSetCo(bool open, float dur)
     {
         if (doorL == null || doorR == null) yield break;
-        float k0 = doorL.localScale.x / doorW0, k1 = open ? 0.10f : 1f;
-        float y0 = doorL.localEulerAngles.y; if (y0 > 180f) y0 -= 360f;
-        float y1 = open ? 22f : 0f;
+        float u0 = Vector3.Distance(doorL.position, doorL0) / DOOR_SLIDE;
+        float u1 = open ? 1f : 0f;
         float t = 0f;
         while (t < dur)
         {
             t += Time.deltaTime;
-            float u = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
-            DoorApply(Mathf.Lerp(k0, k1, u), Mathf.Lerp(y0, y1, u));
+            DoorSlide(Mathf.Lerp(u0, u1, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur))));
             yield return null;
         }
-        DoorApply(k1, y1);
+        DoorSlide(u1);
     }
 
     /// 3단 상태 텐트를 to 상태로 교체 — 지금 켜져 있는 것을 찾아 팝 연출로 넘긴다
@@ -786,12 +789,13 @@ public partial class SKMain
         doorR = FindKitchenChild("C_TentDoorR");
         if (tentBody != null && tentBodyOpen != null && doorL != null && doorR != null)
         {
-            doorW0 = doorL.localScale.x;
+            // 배치(회전·스케일)는 씬 값을 그대로 쓰고 위치만 기억한다 — 코드가 배치를 덮어쓰지 않게
+            doorL0 = doorL.position;
+            doorR0 = doorR.position;
             tentBody.gameObject.SetActive(true);
             tentBodyOpen.gameObject.SetActive(false);
             doorL.gameObject.SetActive(true);
             doorR.gameObject.SetActive(true);
-            DoorApply(1f, 0f);
             return;
         }
 

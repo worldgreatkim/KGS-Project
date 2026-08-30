@@ -439,3 +439,22 @@ Camp_ButaneCan, Camp_Firepit, Camp_GrassTile, Camp_Table, Camp_Tent 우리 게�
 해당 없음
 ### 커밋
 해당 없음(무수정)
+
+## [수정] 문 열림을 회전 → 가로 축소 방식으로 (B안) — 2026-08-31 04:35
+### 프롬프트
+B로 진행해
+> 맥락: 직전 [조사]의 B안 승인 — 가로 폭 축소(1→0.10) + 살짝 젖힘(0→25°)
+### 조작 내역
+- SKMainCamp.FlapSetCo 재작성: Y축 100° 회전만 주던 것을
+  `localScale.x 1 → FLAP_OPEN_W(0.10)` + `rotY 0 → ±25°` 동시 보간으로 변경.
+  각 문짝의 원점이 바깥 기둥이라 폭이 줄면 천이 기둥 쪽으로 걷히며 접힌다(스케치와 동일).
+  상수 FLAP_OPEN_W 신설 — 0으로 두면 문이 완전히 사라져 '문 없는 텐트'로 읽히므로 0.10만 남김
+- CampTentInitState: 회전만 리셋하던 것에 `localScale = Vector3.one` 추가
+- 체크리스트 패널 y -20 → -52 (상단 "[SPACE] 텐트 들어가기" 안내와 겹침 해소)
+### 검증
+- 컴파일 Error 0건 (FLAP_OPEN_W 리플렉션 확인값 0.1)
+- 에디터 스냅 2장: 중간 프레임(scale 0.55 / 12.5°) — 두 판이 좁아지며 검은 출입구가 벌어짐, 스케치와 일치 / 완료 프레임(0.10 / 25°) — 기둥에 접힌 천만 남음
+- 플레이 슬로우(timeScale 0.22) 진입 실행: 중간 계측 flapL scale=(0.37,1,1) rot=(0,17,0) — 두 값이 함께 보간됨 확인, 종료 후 문 닫힘 복귀 scale=(1,1,1) rot=(0,0,0), inTent=True·campCut=False
+### 실패와 수정
+- 파일만 수정하고 Unity 리프레시 없이 플레이해 **구 어셈블리가 돌아 rot=100·scale=1 이 나왔다**(연출 미적용으로 오인).
+  AssetDatabase.Refresh + RequestScriptCompilation 후 재검증. 앞으로 파일 도구로 코드를 고친 뒤에는 반드시 명시적 재컴파일을 건다.

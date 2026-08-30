@@ -648,13 +648,19 @@ public partial class SKMain
         yield return StartCoroutine(FlapSetCo(true, 0.55f));
     }
 
-    /// 문짝 두 장 여닫기 — 경첩이 문 바깥쪽에 있어 바깥으로 젖혀진다
+    // 열렸을 때 기둥에 남는 천 폭 (0이면 완전히 사라져 '문이 없는 텐트'로 보인다)
+    const float FLAP_OPEN_W = 0.10f;
+
+    /// 문짝 두 장 여닫기 — 각 문짝의 원점이 바깥 기둥이라
+    /// 가로 폭을 줄이면 천이 기둥 쪽으로 걷히며 접힌다. 살짝 젖혀 접힌 각을 준다.
     IEnumerator FlapSetCo(bool open, float dur)
     {
         if (flapL == null || flapR == null) yield break;
         var a0 = flapL.localRotation; var b0 = flapR.localRotation;
-        var a1 = Quaternion.Euler(0, open ? 100f : 0f, 0);
-        var b1 = Quaternion.Euler(0, open ? -100f : 0f, 0);
+        var p0 = flapL.localScale;    var q0 = flapR.localScale;
+        var a1 = Quaternion.Euler(0, open ? 25f : 0f, 0);
+        var b1 = Quaternion.Euler(0, open ? -25f : 0f, 0);
+        var s1 = new Vector3(open ? FLAP_OPEN_W : 1f, 1f, 1f);
         float t = 0f;
         while (t < dur)
         {
@@ -662,9 +668,12 @@ public partial class SKMain
             float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
             flapL.localRotation = Quaternion.Slerp(a0, a1, k);
             flapR.localRotation = Quaternion.Slerp(b0, b1, k);
+            flapL.localScale = Vector3.Lerp(p0, s1, k);
+            flapR.localScale = Vector3.Lerp(q0, s1, k);
             yield return null;
         }
         flapL.localRotation = a1; flapR.localRotation = b1;
+        flapL.localScale = s1;    flapR.localScale = s1;
     }
 
     /// 창 덮개 — 위 경첩이라 바깥·위로 들린다 (차양처럼)
@@ -721,8 +730,8 @@ public partial class SKMain
         flapR = FindKitchenChild("flapR");
         winL = FindKitchenChild("winL");
         winR = FindKitchenChild("winR");
-        if (flapL != null) flapL.localRotation = Quaternion.identity;
-        if (flapR != null) flapR.localRotation = Quaternion.identity;
+        if (flapL != null) { flapL.localRotation = Quaternion.identity; flapL.localScale = Vector3.one; }
+        if (flapR != null) { flapR.localRotation = Quaternion.identity; flapR.localScale = Vector3.one; }
         if (winL != null) winL.localRotation = Quaternion.identity;
         if (winR != null) winR.localRotation = Quaternion.identity;
         if (flapL != null && flapR != null) return;

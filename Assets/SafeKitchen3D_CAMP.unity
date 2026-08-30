@@ -1482,6 +1482,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 108242525}
     m_Modifications:
+    - target: {fileID: 1632672368481140433, guid: 9164e19179011684daaf1aa53723bffd, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -8572306969392815206, guid: 9164e19179011684daaf1aa53723bffd, type: 3}
     - target: {fileID: 2054975014873079705, guid: 9164e19179011684daaf1aa53723bffd, type: 3}
       propertyPath: m_LocalScale.x
       value: 4.3
@@ -3340,13 +3344,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 549413898}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.5, y: 0.04, z: 3.3737085}
-  m_LocalScale: {x: 1.96, y: 2.3065276, z: 2.1328235}
+  m_LocalRotation: {x: -0, y: -0.13503104, z: -0, w: 0.9908414}
+  m_LocalPosition: {x: 3.662, y: 0.20715, z: 2.968}
+  m_LocalScale: {x: 1.6700847, y: 1.9653553, z: 1.8173449}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 108242525}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -15.521, z: 0}
 --- !u!23 &549413900
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7736,6 +7740,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 544636343394211479, guid: 13f99f31ad163e844a07aa2d3b339239, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -8572306969392815206, guid: 13f99f31ad163e844a07aa2d3b339239, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8656,13 +8664,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1439802554}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.2000003, y: 0.04, z: 3.3737085}
-  m_LocalScale: {x: 1.96, y: 2.3065276, z: 2.1328235}
+  m_LocalRotation: {x: 0, y: -0.13503249, z: 0, w: 0.99084115}
+  m_LocalPosition: {x: 5.055, y: 0.18131, z: 3.347}
+  m_LocalScale: {x: 1.7149012, y: 2.0180955, z: 1.8661131}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 108242525}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -15.521, z: 0}
 --- !u!23 &1439802556
 MeshRenderer:
   m_ObjectHideFlags: 0

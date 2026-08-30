@@ -665,12 +665,13 @@ public partial class SKMain
     // (열린 폭 0.86 vs 캐릭터 충돌 폭 0.52)
     const float DOOR_SLIDE = 0.45f;
 
-    /// u=0 닫힘, u=1 열림. 정면이 16° 기울어 있으므로 각 문짝의 로컬 X 방향으로 민다
+    /// u=0 닫힘, u=1 열림. 화면에서 문이 비스듬히 움직이지 않도록 **월드 X 축으로만** 민다
+    /// (문짝의 로컬 X는 정면 기울기 16°만큼 z 성분이 섞여 있어 대각선으로 보인다)
     void DoorSlide(float u)
     {
         if (doorL == null || doorR == null) return;
-        doorL.position = doorL0 - doorL.right * (DOOR_SLIDE * u);
-        doorR.position = doorR0 + doorR.right * (DOOR_SLIDE * u);
+        doorL.position = doorL0 + Vector3.left * (DOOR_SLIDE * u);
+        doorR.position = doorR0 + Vector3.right * (DOOR_SLIDE * u);
     }
 
     IEnumerator DoorSetCo(bool open, float dur)

@@ -1936,7 +1936,7 @@ public partial class SKMain : MonoBehaviour
         // 이동 + 콩콩
         bool moving = false;
         bool sprinting = false;
-        if (!over && openEv == null && !quizOpen && !mgOpen)
+        if (!over && openEv == null && !quizOpen && !mgOpen && !campCut)
         {
             if (fpMode)
             {
@@ -1957,10 +1957,13 @@ public partial class SKMain : MonoBehaviour
                 sprinting = SKIn.Held(KeyCode.LeftShift) || SKIn.Held(KeyCode.RightShift);
                 float spd = SKData.SPEED * (sprinting ? SKData.RUN_MULT : 1f);
                 var p = player.position;
+                // 이동 가능 범위 — 캠핑 텐트 실내에서는 방 안으로 대체된다
+                float bx0 = 0.6f, bx1 = roomW - 0.6f, bz0 = 0.6f, bz1 = roomD - 0.6f;
+                CampMoveBounds(ref bx0, ref bx1, ref bz0, ref bz1);
                 // 축 분리 이동: 막힌 축만 멈추고 나머지 축으로 미끄러짐
-                float nx = Mathf.Clamp(p.x + d.x * spd * dt, 0.6f, roomW - 0.6f);
+                float nx = Mathf.Clamp(p.x + d.x * spd * dt, bx0, bx1);
                 if (!Blocked(new Vector3(nx, 0, p.z))) p.x = nx;
-                float nz = Mathf.Clamp(p.z + d.y * spd * dt, 0.6f, roomD - 0.6f);
+                float nz = Mathf.Clamp(p.z + d.y * spd * dt, bz0, bz1);
                 if (!Blocked(new Vector3(p.x, 0, nz))) p.z = nz;
                 player.position = p;
                 moving = true;
@@ -1971,6 +1974,7 @@ public partial class SKMain : MonoBehaviour
             }
             }
         }
+        if (campWalking) moving = true;   // 진입 연출 중 자동 보행도 걷기 애니·발소리 적용
         if (moving) StepSfx(dt, sprinting);
         if (hasAnim)
         {

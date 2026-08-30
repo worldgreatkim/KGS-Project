@@ -121,6 +121,8 @@ public partial class SKMain
     Transform tentHeater;        // 실내 가스난로
     GameObject tentDoorMark;     // 텐트 앞 느낌표 마커
     bool inTent;                 // 실내 여부
+    bool campCut;                // 진입·퇴장 연출 중 (조작 잠금)
+    bool campWalking;            // 연출 중 자동 보행 (걷기 애니·발소리 유지)
     string campPrompt;           // 이번 프레임 표시할 안내 (UpdateUI가 소비)
     Vector3 outsidePos;          // 밖에서의 플레이어 위치 (복귀용)
     bool heaterMoved;            // 난로를 안전지대로 옮겼는가
@@ -146,7 +148,7 @@ public partial class SKMain
     bool CampTentInteract()
     {
         if (!campMode || tentInterior == null) return false;
-        if (quizOpen || openEv != null || videoOpen) return false;
+        if (quizOpen || openEv != null || videoOpen || campCut) return false;
 
         if (!inTent)
         {
@@ -160,16 +162,43 @@ public partial class SKMain
         return false;
     }
 
+    /// 동물의 숲식 진입 연출:
+    /// 자동 보행으로 입구를 통과 → 화면 암전 → 원형 아이리스가 열리며 실내 공개
     IEnumerator TentEnterCo()
     {
+        campCut = true;
+        // 1) 입구까지 걸어 들어간다 (조작 잠금, 걷기 애니·발소리는 그대로)
+        if (!camSaved) { camSavePos = cam.transform.position; camSaveRot = cam.transform.rotation; camSaved = true; }
+        Vector3 from = player.position;
+        Vector3 to = new Vector3(TENT_DOOR.x, from.y, TENT_DOOR.z - 2.1f);   // 텐트 안쪽까지
+        Vector3 cam0 = cam.transform.position;
+        Vector3 cam1 = cam0 + new Vector3(0, -0.9f, -1.6f);                  // 살짝 다가가는 돌리인
+        pbody.rotation = Quaternion.Euler(0, 180f, 0);                       // 텐트 쪽(−Z)을 향해
+        campWalking = true;
+        float wt = 0f, wdur = 1.45f;
+        while (wt < wdur)
+        {
+            wt += Time.deltaTime;
+            float k = Mathf.Clamp01(wt / wdur);
+            player.position = Vector3.Lerp(from, to, k);
+            cam.transform.position = Vector3.Lerp(cam0, cam1, Mathf.SmoothStep(0f, 1f, k));
+            yield return null;
+        }
+        campWalking = false;
+
+        // 2) 암전 (플레이어는 이미 텐트에 가려져 보이지 않는다)
         yield return StartCoroutine(FadeOut());
-        outsidePos = player.position;
+        yield return new WaitForSeconds(0.22f);
+
+        outsidePos = from;
         inTent = true;
         tentInterior.gameObject.SetActive(true);
         if (tentDoorMark != null) tentDoorMark.SetActive(false);
         // 플레이어·카메라 실내로
         player.position = tentInterior.position + new Vector3(0, 0, 1.9f);
-        CampCamTo(tentInterior.position + new Vector3(0, 0, -0.3f), 12.5f);   // 방 전체가 화면에 (AC 구도)
+        pbody.rotation = Quaternion.Euler(0, 180f, 0);
+        // 동물의 숲식 실내 구도: 시선을 낮춰(34°) 삼각 박공 벽이 정면에 서고 방 전체가 들어온다
+        CampCamTo(tentInterior.position + new Vector3(0, 1.00f, -0.30f), 11.0f, 34f);
         // 실내 위험(난로) 등록 — 기존 퀴즈 시스템 그대로 사용
         if (heaterHz == null && tentHeater != null)
         {
@@ -181,8 +210,81 @@ public partial class SKMain
             hazards.Add(heaterHz);
         }
         Say("텐트 안이야. 어? 가스난로가 켜져 있어!", 4f);
-        yield return StartCoroutine(FadeIn());
+        // 3) 원형 아이리스가 열리며 실내 전체를 공개 (동물의 숲 입장 연출)
+        SKSound.Sfx("sfx_popup", 0.5f);
+        yield return StartCoroutine(IrisCo(true, 0.85f));
+        campCut = false;
         StartCoroutine(TentCoDangerCo());   // 경보음 + CO 안개 축적
+    }
+
+    // ---------- 원형 아이리스 전환 ----------
+    Image irisImg; Texture2D irisTex;
+    const int IRIS_N = 256;
+    void IrisSet(float r)
+    {
+        if (irisImg == null)
+        {
+            var go = new GameObject("iris");
+            go.transform.SetParent(canvas.transform, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            irisImg = go.AddComponent<Image>();
+            irisImg.raycastTarget = false;
+            irisTex = new Texture2D(IRIS_N, IRIS_N, TextureFormat.RGBA32, false);
+            irisTex.wrapMode = TextureWrapMode.Clamp;
+            irisTex.filterMode = FilterMode.Bilinear;
+            irisImg.sprite = Sprite.Create(irisTex, new Rect(0, 0, IRIS_N, IRIS_N), new Vector2(0.5f, 0.5f));
+        }
+        irisImg.gameObject.SetActive(true);
+        // 화면 비율을 보정해 정원(正圓)으로 — 안쪽은 투명, 바깥은 검정
+        float asp = Screen.width / Mathf.Max(1f, (float)Screen.height);
+        float diag = Mathf.Sqrt(asp * asp + 1f);
+        var px = new Color32[IRIS_N * IRIS_N];
+        for (int y = 0; y < IRIS_N; y++)
+        {
+            float v = (y + 0.5f) / IRIS_N * 2f - 1f;
+            for (int x = 0; x < IRIS_N; x++)
+            {
+                float u = ((x + 0.5f) / IRIS_N * 2f - 1f) * asp;
+                float d = Mathf.Sqrt(u * u + v * v) / diag;
+                float a = Mathf.Clamp01((d - r) / 0.035f);
+                px[y * IRIS_N + x] = new Color32(0, 0, 0, (byte)(a * 255f));
+            }
+        }
+        irisTex.SetPixels32(px);
+        irisTex.Apply(false);
+    }
+    /// open=true: 검은 화면에서 원이 열림 / false: 원이 닫히며 암전
+    IEnumerator IrisCo(bool open, float dur)
+    {
+        IrisSet(open ? 0f : 1.06f);
+        if (open && fadeImg != null) { fadeImg.gameObject.SetActive(false); fadeImg.color = Color.clear; }
+        float t = 0f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
+            IrisSet(open ? k * 1.06f : (1f - k) * 1.06f);
+            yield return null;
+        }
+        if (open) irisImg.gameObject.SetActive(false);
+        else
+        {
+            IrisSet(0f);
+            if (fadeImg == null) yield return StartCoroutine(FadeOut());
+            else { fadeImg.gameObject.SetActive(true); fadeImg.color = Color.black; }
+            irisImg.gameObject.SetActive(false);
+        }
+    }
+
+    /// 실내에서는 맵 경계 대신 텐트 방 안으로 이동을 제한한다 (SKMain 이동 처리에서 호출)
+    void CampMoveBounds(ref float x0, ref float x1, ref float z0, ref float z1)
+    {
+        if (!campMode || !inTent || tentInterior == null) return;
+        var c = tentInterior.position;
+        x0 = c.x - 3.5f; x1 = c.x + 3.5f;
+        z0 = c.z - 2.3f; z1 = c.z + 2.7f;
     }
 
     /// 동물의 숲식 숲속 공터 — 맵 둘레를 나무로 두르고 원경은 안개로 흐림
@@ -351,7 +453,9 @@ public partial class SKMain
     IEnumerator TentExitCo()
     {
         yield return StartCoroutine(CoClearCo());   // CO 안개 배출 + 경보 정지
-        yield return StartCoroutine(FadeOut());
+        campCut = true;
+        yield return StartCoroutine(IrisCo(false, 0.55f));   // 원이 닫히며 암전 (입장의 역순)
+        yield return new WaitForSeconds(0.18f);
         inTent = false;
         // 난로를 텐트 앞으로 이동 (실외 오브젝트로 재부모)
         if (tentHeater != null)
@@ -380,6 +484,7 @@ public partial class SKMain
         }
         Say("환기 완료! 이제 난로를 안전지대로 옮기자 — 다가가서 [SPACE]", 5f);
         yield return StartCoroutine(FadeIn());
+        campCut = false;
     }
 
     /// 밖으로 나온 난로 → 안전지대 이송 (SPACE)
@@ -406,13 +511,13 @@ public partial class SKMain
 
     // 카메라 이동 (쿼터뷰 각도 유지)
     Vector3 camSavePos; Quaternion camSaveRot; bool camSaved;
-    void CampCamTo(Vector3 center, float dist)
+    void CampCamTo(Vector3 center, float dist, float pitch = 52f)
     {
         if (cam == null) return;
         if (!camSaved) { camSavePos = cam.transform.position; camSaveRot = cam.transform.rotation; camSaved = true; }
-        float rad = 52f * Mathf.Deg2Rad;
+        float rad = pitch * Mathf.Deg2Rad;
         cam.transform.position = center + new Vector3(0, Mathf.Sin(rad), Mathf.Cos(rad)) * dist;
-        cam.transform.rotation = Quaternion.Euler(52f, 180f, 0);
+        cam.transform.rotation = Quaternion.Euler(pitch, 180f, 0);
         cam.backgroundColor = new Color(0.30f, 0.22f, 0.10f);   // 텐트 속 어둑한 톤
         // 외곽 마루(캠핑장 초록)도 어둡게 — 실내에서 바깥 잔디가 비치지 않게
         var of = GameObject.Find("outer_floor");

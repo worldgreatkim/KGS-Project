@@ -64,3 +64,4 @@
 - Models3D/GasAlert.glb (일산화탄소 경보기): Gemini 생성(refs/Gas_Alert.png) → Tripo image-to-model (2026-08-31). 텐트 실내 CO 위험 연출용
 - refs/Camp_GrassTile.png: 캠핑장 잔디 바닥 텍스처 — Gemini 생성 (2026-08-30)
 - Models3D/SafeBasket.glb (안전지대 보관 바구니): Gemini 파생 생성(기준: refs/Mod_Burner.png, 원본 refs/SafeBasket.png·SafeZone.png) → Tripo image-to-model (2026-08-30). 안전지대 매트 위 배치 — 위험물 보관 행동요령 시각화
+- Models3D/int_gable·int_sideL·int_sideR.asset + mat_ac_canvas·_bk·mat_ac_pole.mat: 텐트 실내 A프레임(박공 삼각벽·경사 캔버스) — 코드로 절차 생성 (외부 에셋 아님, 2026-08-31)

@@ -57,6 +57,7 @@ public partial class SKMain
         }
         CampTentInitState();
         CampTentEnterInit();
+        CampTentFogInit();          // 텐트 앞에 CO 안개를 미리 깔아 위험을 예고
         BuildCampList();
         BuildVideoPanel();
         Say("캠핑장 곳곳의 위험 5곳을 찾아 고쳐 보자!", 5f);
@@ -142,6 +143,57 @@ public partial class SKMain
         tentDoorMark.name = "tent_door_mark";
         var bang = SpawnBang(tentDoorMark);
         if (bang != null) bang.text = "!";
+    }
+
+    // ---------- 텐트 앞에 미리 깔리는 CO 안개 ----------
+    readonly List<GameObject> tentFog = new List<GameObject>();
+
+    /// 들어가기 전부터 '뭔가 새고 있다'는 신호를 바닥에 깔아둔다
+    void CampTentFogInit()
+    {
+        var prefab = Resources.Load<GameObject>("VFX/GasFog");
+        if (prefab == null) return;
+        Vector3[] at = {
+            new Vector3(TENT_DOOR.x - 0.55f, 0.20f, TENT_DOOR.z - 0.60f),
+            new Vector3(TENT_DOOR.x + 0.60f, 0.20f, TENT_DOOR.z - 0.45f),
+            new Vector3(TENT_DOOR.x - 0.15f, 0.20f, TENT_DOOR.z + 0.25f),
+            new Vector3(TENT_DOOR.x + 0.75f, 0.20f, TENT_DOOR.z + 0.80f),
+            new Vector3(TENT_DOOR.x - 0.85f, 0.20f, TENT_DOOR.z + 0.85f),
+        };
+        for (int i = 0; i < at.Length; i++)
+        {
+            var g = Instantiate(prefab);
+            g.name = "camp_tent_fog" + i;
+            g.transform.position = at[i];
+            var ps = g.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var m = ps.main;
+                m.startSize = new ParticleSystem.MinMaxCurve(0.9f, 1.5f);   // 크면 화면 전체가 뿌예진다
+                // 밝은 잔디 위라 베이지색은 묻힌다 — 회색빛으로 깔아야 '연기'로 읽힌다
+                m.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(0.58f, 0.57f, 0.60f, 0.55f), new Color(0.46f, 0.45f, 0.48f, 0.38f));
+                m.maxParticles = 22;
+                var sh = ps.shape; sh.scale = new Vector3(1.2f, 0.25f, 1.2f);
+                var em = ps.emission; em.rateOverTime = 5f;
+                ps.Clear(); ps.Play();
+            }
+            tentFog.Add(g);
+        }
+    }
+
+    /// 환기 성공 → 텐트 앞 안개도 걷힌다
+    IEnumerator TentFogClearCo()
+    {
+        foreach (var g in tentFog)
+        {
+            if (g == null) continue;
+            var ps = g.GetComponent<ParticleSystem>();
+            if (ps != null) { var em = ps.emission; em.rateOverTime = 0f; }
+        }
+        yield return new WaitForSeconds(2.4f);   // 남은 입자가 자연히 사라질 시간
+        foreach (var g in tentFog) if (g != null) Destroy(g);
+        tentFog.Clear();
     }
 
     /// 매 프레임 — 입구 근접 시 프롬프트, SPACE 처리
@@ -490,6 +542,7 @@ public partial class SKMain
         yield return new WaitForSeconds(0.18f);
         inTent = false;
         tentDone = true;                      // 환기 완료 — 텐트는 여기서 끝, 재진입 차단
+        StartCoroutine(TentFogClearCo());     // 텐트 앞 안개도 걷힌다
         if (tentDoorMark != null) tentDoorMark.SetActive(false);
         tentInterior.gameObject.SetActive(false);
         // 텐트 본체 콜라이더 안쪽으로 복귀하면 사방이 막혀 갇힌다 → 데크 앞 안전 지점으로
@@ -784,29 +837,10 @@ public partial class SKMain
 
     IEnumerator TentSwapCo(Transform closed, Transform open)
     {
-        // 닫힌 텐트가 살짝 부푼 뒤 사라지고 열린 텐트가 팝인 — 플랩이 걷히는 인상
-        var c0 = closed.localScale;
-        float t = 0f;
-        while (t < 0.18f)
-        {
-            t += Time.deltaTime;
-            closed.localScale = c0 * Mathf.Lerp(1f, 1.06f, t / 0.18f);
-            yield return null;
-        }
+        // 즉시 교체 — 크기가 출렁이면 눈에 띈다. 이 순간엔 바람 VFX와 "환기 완료!"가 같이 터져 컷이 묻힌다
         closed.gameObject.SetActive(false);
-        closed.localScale = c0;
-
-        var o0 = open.localScale;
         open.gameObject.SetActive(true);
-        open.localScale = o0 * 0.94f;
-        t = 0f;
-        while (t < 0.22f)
-        {
-            t += Time.deltaTime;
-            open.localScale = Vector3.Lerp(o0 * 0.94f, o0, t / 0.22f);
-            yield return null;
-        }
-        open.localScale = o0;
+        yield break;
     }
 
     /// 시작 상태 정리 — 닫힌 텐트 노출, 열린 텐트 숨김 (에셋 준비 전엔 무동작)

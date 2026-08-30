@@ -65,3 +65,4 @@
 - refs/Camp_GrassTile.png: 캠핑장 잔디 바닥 텍스처 — Gemini 생성 (2026-08-30)
 - Models3D/SafeBasket.glb (안전지대 보관 바구니): Gemini 파생 생성(기준: refs/Mod_Burner.png, 원본 refs/SafeBasket.png·SafeZone.png) → Tripo image-to-model (2026-08-30). 안전지대 매트 위 배치 — 위험물 보관 행동요령 시각화
 - Models3D/int_gable·int_sideL·int_sideR.asset + mat_ac_canvas·_bk·mat_ac_pole.mat: 텐트 실내 A프레임(박공 삼각벽·경사 캔버스) — 코드로 절차 생성 (외부 에셋 아님, 2026-08-31)
+- Models3D/af_*.asset + mat_ac_canvas_rf·_sd·mat_ac_flap·mat_ac_doorway·mat_ac_deck.mat: 캠핑장 진입 텐트(박공 정면·출입구·양옆 창문·문짝) — 코드로 절차 생성 (외부 에셋 아님, 2026-08-31)

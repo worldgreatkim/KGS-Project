@@ -497,6 +497,9 @@ public partial class SKMain : MonoBehaviour
         tm.fontStyle = FontStyle.Bold;
         var mr = tgo.GetComponent<MeshRenderer>();
         mr.material = font.material;
+        // 빌보드 글자라 그림자를 드리우면 벽에 정체불명의 얼룩이 생긴다
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = false;
         return tm;
     }
 

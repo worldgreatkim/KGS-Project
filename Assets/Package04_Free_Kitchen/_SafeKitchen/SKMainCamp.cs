@@ -70,7 +70,7 @@ public partial class SKMain
         var rt = pnCampList.AddComponent<RectTransform>();
         rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
         rt.pivot = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(20, -20);
+        rt.anchoredPosition = new Vector2(20, -52);   // 상단 안내문("[SPACE] …")과 겹치지 않게 한 줄 내림
         rt.sizeDelta = new Vector2(250, 40 + CAMP_TOTAL * 32);
         var bg = pnCampList.AddComponent<Image>();
         bg.color = new Color(0.10f, 0.13f, 0.19f, 0.78f);
@@ -174,6 +174,9 @@ public partial class SKMain
         Vector3 cam0 = cam.transform.position;
         Vector3 cam1 = cam0 + new Vector3(0, -0.9f, -1.6f);                  // 살짝 다가가는 돌리인
         pbody.rotation = Quaternion.Euler(0, 180f, 0);                       // 텐트 쪽(−Z)을 향해
+        // 문이 먼저 양옆으로 열린다
+        SKSound.Sfx("sfx_window", 0.55f);
+        yield return StartCoroutine(FlapSetCo(true, 0.40f));
         campWalking = true;
         float wt = 0f, wdur = 1.45f;
         while (wt < wdur)
@@ -185,6 +188,7 @@ public partial class SKMain
             yield return null;
         }
         campWalking = false;
+        StartCoroutine(FlapSetCo(false, 0.35f));   // 뒤에서 문이 닫힌다
 
         // 2) 암전 (플레이어는 이미 텐트에 가려져 보이지 않는다)
         yield return StartCoroutine(FadeOut());
@@ -627,11 +631,59 @@ public partial class SKMain
         return null;
     }
 
-    /// 환기: 닫힌 텐트 → 열린 텐트 교체 (에셋 없으면 조용히 생략)
+    /// 환기: 문짝 두 장을 양쪽으로 활짝 (절차 생성 텐트),
+    /// 없으면 예전 방식(닫힌 텐트 → 열린 텐트 GLB 교체)로 폴백
     void CampSwapTentOpen()
     {
+        if (flapL != null && flapR != null) { StartCoroutine(FlapOpenCo()); return; }
         if (tentClosed == null || tentOpen == null) return;
         StartCoroutine(TentSwapCo(tentClosed, tentOpen));
+    }
+
+    Transform flapL, flapR, winL, winR;
+
+    IEnumerator FlapOpenCo()
+    {
+        StartCoroutine(WindowOpenCo());     // 환기니까 양옆 창도 같이 젖힌다
+        yield return StartCoroutine(FlapSetCo(true, 0.55f));
+    }
+
+    /// 문짝 두 장 여닫기 — 경첩이 문 바깥쪽에 있어 바깥으로 젖혀진다
+    IEnumerator FlapSetCo(bool open, float dur)
+    {
+        if (flapL == null || flapR == null) yield break;
+        var a0 = flapL.localRotation; var b0 = flapR.localRotation;
+        var a1 = Quaternion.Euler(0, open ? 100f : 0f, 0);
+        var b1 = Quaternion.Euler(0, open ? -100f : 0f, 0);
+        float t = 0f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
+            flapL.localRotation = Quaternion.Slerp(a0, a1, k);
+            flapR.localRotation = Quaternion.Slerp(b0, b1, k);
+            yield return null;
+        }
+        flapL.localRotation = a1; flapR.localRotation = b1;
+    }
+
+    /// 창 덮개 — 위 경첩이라 바깥·위로 들린다 (차양처럼)
+    IEnumerator WindowOpenCo()
+    {
+        if (winL == null || winR == null) yield break;
+        var a0 = winL.localRotation; var b0 = winR.localRotation;
+        var a1 = Quaternion.Euler(0, 0, -62f);
+        var b1 = Quaternion.Euler(0, 0, 62f);
+        float t = 0f, dur = 0.6f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
+            winL.localRotation = Quaternion.Slerp(a0, a1, k);
+            winR.localRotation = Quaternion.Slerp(b0, b1, k);
+            yield return null;
+        }
+        winL.localRotation = a1; winR.localRotation = b1;
     }
 
     IEnumerator TentSwapCo(Transform closed, Transform open)
@@ -664,6 +716,17 @@ public partial class SKMain
     /// 시작 상태 정리 — 닫힌 텐트 노출, 열린 텐트 숨김 (에셋 준비 전엔 무동작)
     void CampTentInitState()
     {
+        // 절차 생성 텐트(C_TentAF)가 있으면 문짝을 닫힌 각도로 리셋
+        flapL = FindKitchenChild("flapL");
+        flapR = FindKitchenChild("flapR");
+        winL = FindKitchenChild("winL");
+        winR = FindKitchenChild("winR");
+        if (flapL != null) flapL.localRotation = Quaternion.identity;
+        if (flapR != null) flapR.localRotation = Quaternion.identity;
+        if (winL != null) winL.localRotation = Quaternion.identity;
+        if (winR != null) winR.localRotation = Quaternion.identity;
+        if (flapL != null && flapR != null) return;
+
         tentClosed = FindKitchenChild("C_CampTentClosed");
         tentOpen = FindKitchenChild("C_CampTentOpen");
         if (tentClosed == null || tentOpen == null) return;

@@ -125,7 +125,8 @@ public partial class SKMain
     bool campWalking;            // 연출 중 자동 보행 (걷기 애니·발소리 유지)
     string campPrompt;           // 이번 프레임 표시할 안내 (UpdateUI가 소비)
     Vector3 outsidePos;          // 밖에서의 플레이어 위치 (복귀용)
-    bool heaterMoved;            // 난로를 안전지대로 옮겼는가
+    bool heaterMoved;            // (구) 난로 이송 단계 — 현재 미사용
+    bool tentDone;               // 환기까지 끝났는가 (끝나면 재진입 차단)
     Hz heaterHz;                 // 실내 난로 위험 (퀴즈 대상)
     static readonly Vector3 TENT_DOOR = new Vector3(4.5f, 0f, 5.0f);   // 텐트 앞 입구 지점
 
@@ -152,7 +153,7 @@ public partial class SKMain
 
         if (!inTent)
         {
-            if (heaterMoved || tentDoorMark == null) return false;
+            if (tentDone || tentDoorMark == null) return false;   // 환기 끝난 텐트는 다시 들어가지 않는다
             float d = Vector2.Distance(new Vector2(player.position.x, player.position.z), new Vector2(TENT_DOOR.x, TENT_DOOR.z));
             if (d > 2.2f) return false;
             campPrompt = "[SPACE] 텐트 들어가기";
@@ -185,7 +186,9 @@ public partial class SKMain
         {
             wt += Time.deltaTime;
             float k = Mathf.Clamp01(wt / wdur);
-            player.position = Vector3.Lerp(from, to, k);
+            var wp = Vector3.Lerp(from, to, k);
+            wp.y = CampFootHeight(wp);        // 데크를 밟고 올라선다 (코루틴이 Update 뒤에 돌아 직접 반영)
+            player.position = wp;
             cam.transform.position = Vector3.Lerp(cam0, cam1, Mathf.SmoothStep(0f, 1f, k));
             yield return null;
         }
@@ -283,6 +286,28 @@ public partial class SKMain
             else { fadeImg.gameObject.SetActive(true); fadeImg.color = Color.black; }
             irisImg.gameObject.SetActive(false);
         }
+    }
+
+    // 텐트 앞 나무 데크 — 윗면 y 0.270, x 3.60~5.70, z 3.55~4.42 (실측)
+    const float DECK_Y = 0.27f;
+
+    /// 그 지점의 발 높이 — 데크 위면 데크 윗면, 아니면 지면
+    float CampFootHeight(Vector3 p)
+    {
+        if (!campMode || inTent) return 0f;
+        bool onDeck = p.x > 3.62f && p.x < 5.68f && p.z > 3.58f && p.z < 4.40f;
+        return onDeck ? DECK_Y : 0f;
+    }
+
+    /// 데크에 올라서면 발이 파묻히지 않게 높이를 따라간다 (SKMain Update에서 매 프레임)
+    void CampFootY(float dt)
+    {
+        if (!campMode || inTent || player == null) return;
+        var p = player.position;
+        float target = CampFootHeight(p);
+        if (Mathf.Abs(p.y - target) < 0.001f) return;
+        p.y = Mathf.MoveTowards(p.y, target, 1.8f * dt);
+        player.position = p;
     }
 
     /// 실내에서는 맵 경계 대신 텐트 방 안으로 이동을 제한한다 (SKMain 이동 처리에서 호출)
@@ -464,18 +489,11 @@ public partial class SKMain
         yield return StartCoroutine(IrisCo(false, 0.55f));   // 원이 닫히며 암전 (입장의 역순)
         yield return new WaitForSeconds(0.18f);
         inTent = false;
-        // 난로를 텐트 앞으로 이동 (실외 오브젝트로 재부모)
-        if (tentHeater != null)
-        {
-            tentHeater.SetParent(FindKitchenChild("Kitchen") ?? tentHeater.parent, true);
-            var k = GameObject.Find("Kitchen");
-            if (k != null) tentHeater.SetParent(k.transform, true);
-            tentHeater.position = new Vector3(4.5f, 0.1f, 5.6f);
-            tentHeater.rotation = Quaternion.Euler(0, 180f, 0);
-            tentHeater.name = "OutHeater";
-        }
+        tentDone = true;                      // 환기 완료 — 텐트는 여기서 끝, 재진입 차단
+        if (tentDoorMark != null) tentDoorMark.SetActive(false);
         tentInterior.gameObject.SetActive(false);
-        player.position = outsidePos;
+        // 텐트 본체 콜라이더 안쪽으로 복귀하면 사방이 막혀 갇힌다 → 데크 앞 안전 지점으로
+        player.position = new Vector3(TENT_DOOR.x, 0f, TENT_DOOR.z + 0.9f);
         CampCamRestore();
         CampSwapTentOpen();          // 텐트 열림 (문·창문 개방)
         SKSound.Sfx("sfx_vent", 0.85f);
@@ -489,7 +507,7 @@ public partial class SKMain
             if (ps != null) ps.Play(true);
             Destroy(w, 3.5f);
         }
-        Say("환기 완료! 이제 난로를 안전지대로 옮기자 — 다가가서 [SPACE]", 5f);
+        Say("환기 완료! 텐트 안에서는 절대 불을 피우면 안 돼 ★", 5f);
         yield return StartCoroutine(FadeIn());
         campCut = false;
     }
@@ -1042,9 +1060,9 @@ public partial class SKMain
             var tb = tentDoorMark.GetComponentInChildren<TextMesh>();
             if (tb != null) tb.transform.rotation = cam.transform.rotation;
         }
-        // 텐트 진입 / 난로 이송 상호작용 (위험 퀴즈보다 우선)
+        // 텐트 진입 상호작용 (위험 퀴즈보다 우선)
+        // ※ 난로 이송 단계는 폐지 — 환기 자체가 목표라 밖으로 옮길 필요가 없다
         if (CampTentInteract()) { }
-        else if (CampHeaterCarry()) { }
         return true;
     }
 }

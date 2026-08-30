@@ -279,6 +279,9 @@ public partial class SKMain : MonoBehaviour
             if (n.Contains("ShelterTable") || n.Contains("Carpet") || n.Contains("Window")
                 || n.Contains("Hood") || n.Contains("Valve") || n.Contains("StoveAnchor")
                 || n.Contains("Stool") || n.Contains("Cup") || n.Contains("FireExtinguisher")) continue;
+            // 캠핑 텐트 실내는 '들어가서 돌아다니는 공간'이라 통째로 막으면 안 된다.
+            // 출입구 뒤 가림막·실내 세트도 충돌 대상이 아니다.
+            if (n == "TentInterior" || n.StartsWith("C_TentPeek") || n.StartsWith("C_TentDark")) continue;
             var rs = child.GetComponentsInChildren<Renderer>();
             if (rs.Length == 0) continue;
             var b = rs[0].bounds;
@@ -1977,6 +1980,7 @@ public partial class SKMain : MonoBehaviour
             }
             }
         }
+        CampFootY(dt);                    // 텐트 앞 데크에 올라서면 발 높이를 맞춘다
         if (campWalking) moving = true;   // 진입 연출 중 자동 보행도 걷기 애니·발소리 적용
         if (moving) StepSfx(dt, sprinting);
         if (hasAnim)

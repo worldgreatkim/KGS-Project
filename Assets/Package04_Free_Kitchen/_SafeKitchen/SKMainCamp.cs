@@ -488,26 +488,47 @@ public partial class SKMain
     IEnumerator CoClearCo()
     {
         coRunning = false;
-        Vector3 to = tentInterior != null ? tentInterior.position + new Vector3(0, 3.5f, 3.5f) : Vector3.zero;
+        if (coClouds.Count == 0) yield break;
+
+        // 실내에 바람을 크게 일으켜 문 쪽(+Z)으로 쓸어낸다 — 기존엔 한 점으로 모이기만 해 눈에 안 띄었다
+        var windPrefab = Resources.Load<GameObject>("VFX/CFXR4 Wind Trails");
+        var winds = new List<GameObject>();
+        if (windPrefab != null && tentInterior != null)
+            for (int i = 0; i < 3; i++)
+            {
+                var w = Instantiate(windPrefab);
+                w.transform.position = tentInterior.position + new Vector3((i - 1) * 2.1f, 0.85f, -2.5f);
+                w.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 0.15f, 1f));
+                w.transform.localScale = Vector3.one * 3.2f;
+                var wps = w.GetComponent<ParticleSystem>();
+                if (wps != null) wps.Play(true);
+                winds.Add(w);
+            }
+        SKSound.Sfx("sfx_vent", 1f);
+        SKSound.Sfx("sfx_window", 0.6f, 0.9f);
+
+        Vector3 center = tentInterior != null ? tentInterior.position : Vector3.zero;
         var starts = new List<Vector3>();
         var scales = new List<Vector3>();
         foreach (var c in coClouds) { starts.Add(c != null ? c.position : Vector3.zero); scales.Add(c != null ? c.localScale : Vector3.one); }
-        float t = 0f;
-        while (t < 1.1f)
+        float dur = 1.8f, t = 0f;
+        while (t < dur)
         {
             t += Time.deltaTime;
-            float k = Mathf.Clamp01(t / 1.1f);
+            float e = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / dur));
             for (int i = 0; i < coClouds.Count; i++)
             {
                 var c = coClouds[i];
                 if (c == null) continue;
-                c.position = Vector3.Lerp(starts[i], to, Mathf.SmoothStep(0f, 1f, k));
-                c.localScale = scales[i] * (1f - 0.85f * k);
+                // 문 쪽으로 밀려 나가며 위로 흩어지고 옅어진다
+                c.position = starts[i] + new Vector3((starts[i].x - center.x) * 0.40f * e, 1.7f * e, 6.8f * e);
+                c.localScale = scales[i] * Mathf.Max(0.05f, 1f - 0.92f * e);
             }
             yield return null;
         }
         foreach (var c in coClouds) if (c != null) Destroy(c.gameObject);
         coClouds.Clear();
+        foreach (var w in winds) if (w != null) Destroy(w, 1.4f);
     }
 
     /// 퀴즈 정답 후: 밖으로 복귀 + 텐트 열림 + 난로가 텐트 앞에 나와 있음
@@ -532,6 +553,7 @@ public partial class SKMain
             var w = Instantiate(wind);
             w.transform.position = new Vector3(4.5f, 1.0f, 3.6f);
             w.transform.rotation = Quaternion.LookRotation(new Vector3(0, 0.2f, 1f));
+            w.transform.localScale = Vector3.one * 2.6f;   // 기본 크기로는 화면에서 거의 안 보인다
             var ps = w.GetComponent<ParticleSystem>();
             if (ps != null) ps.Play(true);
             Destroy(w, 3.5f);
@@ -661,6 +683,7 @@ public partial class SKMain
             var w = Instantiate(wind);
             w.transform.position = new Vector3(4.5f, 1.0f, 3.4f);
             w.transform.rotation = Quaternion.LookRotation(new Vector3(0, 0.2f, 1f));
+            w.transform.localScale = Vector3.one * 2.6f;
             var ps = w.GetComponent<ParticleSystem>();
             if (ps != null) ps.Play(true);
             Destroy(w, 3.5f);

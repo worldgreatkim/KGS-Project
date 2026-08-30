@@ -457,6 +457,35 @@ public partial class SKMain
         var prefab = Resources.Load<GameObject>("VFX/GasFog");
         float t = 0f;
         int n = 0;
+        // 들어가자마자 바닥에 이미 가스가 깔려 있어야 한다 (쌓이기를 기다리게 하면 위험이 늦게 읽힌다)
+        if (prefab != null && tentInterior != null)
+        {
+            Vector2[] seed = { new Vector2(-2.1f, -1.4f), new Vector2(1.9f, -1.7f),
+                               new Vector2(-1.5f, 1.3f), new Vector2(2.2f, 1.0f), new Vector2(0.2f, -0.2f) };
+            foreach (var s in seed)
+            {
+                var g0 = Instantiate(prefab);
+                g0.name = "co_fog_seed";
+                g0.transform.position = tentInterior.position + new Vector3(s.x, 0.28f, s.y);
+                var p0 = g0.GetComponent<ParticleSystem>();
+                if (p0 != null)
+                {
+                    var mm = p0.main;
+                    mm.startSize = new ParticleSystem.MinMaxCurve(1.8f, 2.8f);
+                    // 실내 바닥이 황토색이라 베이지 연기는 묻힌다 — 밝은 회백색이어야 읽힌다
+                    mm.startColor = new ParticleSystem.MinMaxGradient(
+                        new Color(0.88f, 0.88f, 0.90f, 0.60f), new Color(0.76f, 0.76f, 0.80f, 0.45f));
+                    mm.maxParticles = 45;
+                    var sh0 = p0.shape; sh0.scale = new Vector3(2.0f, 0.5f, 2.0f);
+                    var em0 = p0.emission; em0.rateOverTime = 9f;
+                    p0.Clear(); p0.Play();
+                    p0.Simulate(3.0f, true, false);   // 이미 퍼져 있는 상태로 시작
+                    p0.Play();
+                }
+                coClouds.Add(g0.transform);
+            }
+            n = 3;   // 이후 축적은 남은 만큼만
+        }
         Renderer alertR = gasAlert != null ? gasAlert.GetComponentInChildren<Renderer>() : null;
         Color alert0 = alertR != null ? alertR.material.color : Color.white;
         float beep = 0f;
@@ -483,9 +512,9 @@ public partial class SKMain
                 if (ps != null)
                 {
                     var m = ps.main;
-                    m.startSize = new ParticleSystem.MinMaxCurve(1.5f, 2.6f);
+                    m.startSize = new ParticleSystem.MinMaxCurve(1.8f, 2.8f);
                     m.startColor = new ParticleSystem.MinMaxGradient(
-                        new Color(0.80f, 0.66f, 0.60f, 0.42f), new Color(0.66f, 0.52f, 0.48f, 0.32f));
+                        new Color(0.88f, 0.88f, 0.90f, 0.60f), new Color(0.76f, 0.76f, 0.80f, 0.45f));
                     m.maxParticles = 50;
                     var sh = ps.shape; sh.scale = new Vector3(2.2f, 0.6f, 2.2f);
                     var em = ps.emission; em.rateOverTime = 8f;

@@ -77,19 +77,19 @@ public static class SKData
     // ---- 캠핑 교육 스테이지 (SafeKitchen3D_CAMP) — 시간 무제한, 체크리스트 5종 ----
     public static readonly Dictionary<string, Vector3> HZ_CAMP = new Dictionary<string, Vector3>
     {
-        {"camp_tent",    new Vector3(4.5f,  0.8f, 3.6f)},    // 텐트 안 버너
-        {"camp_foil",    new Vector3(7.5f,  0.9f, 9.2f)},    // 호일 감은 삼발이
-        {"camp_pan",     new Vector3(11.2f, 1.0f, 8.9f)},    // 과대불판
-        {"camp_can",     new Vector3(12.0f, 0.5f, 4.9f)},    // 모닥불 옆 부탄캔
-        {"camp_dispose", new Vector3(16.5f, 0.5f, 8.5f)},    // 다 쓴 캔 폐기 더미
+        {"camp_tent",    new Vector3(4.5f,  0.9f, 3.5f)},    // 텐트 안 버너 (입구 앞)
+        {"camp_foil",    new Vector3(7.5f,  1.1f, 9.2f)},    // 호일 감은 삼발이 (테이블1)
+        {"camp_pan",     new Vector3(12.2f, 1.1f, 9.2f)},    // 과대불판 (테이블2)
+        {"camp_can",     new Vector3(11.9f, 0.6f, 4.7f)},    // 모닥불 옆 부탄캔
+        {"camp_dispose", new Vector3(16.5f, 0.5f, 8.7f)},    // 다 쓴 캔 폐기 더미
     };
 
     public static readonly Dictionary<string, Ev> EV_CAMP = new Dictionary<string, Ev>
     {
         {"camp_tent", new Ev { q = "텐트 안에서 버너를 쓰고 있어!", ttl = 99999f,
-            toast = "텐트 안 가스기기 사용 절대 금지 — 일산화탄소 중독 위험!",
+            toast = "텐트 밖으로 옮기고 환기까지! 일산화탄소는 무색무취라 더 위험해.",
             icons = new List<Opt> {
-                new Opt { t = "버너를 텐트 밖으로 옮긴다", ok = true },
+                new Opt { t = "버너를 밖으로 옮기고 환기한다", ok = true },
                 new Opt { t = "문만 닫고 계속 쓴다", no = "밀폐되면 일산화탄소가 쌓여!" },
                 new Opt { t = "잠깐이면 괜찮아", no = "텐트 안 가스기기는 절대 금지!" } } } },
         {"camp_foil", new Ev { q = "삼발이에 은박 호일을 감아놨어!", ttl = 99999f,

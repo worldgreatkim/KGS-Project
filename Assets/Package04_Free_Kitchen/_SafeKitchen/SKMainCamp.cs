@@ -100,12 +100,154 @@ public partial class SKMain
         campChecks[type].text = "✓ " + CAMP_LABELS[idx];
         campChecks[type].color = new Color(0.5f, 0.95f, 0.6f);
         campCleared++;
+        if (type == "camp_tent") StartCoroutine(CampTentFixCo());
+        if (type == "camp_can") FlyToSafeZone("C_FireCan");
+        if (type == "camp_foil") CampRemoveFoil();
+        if (type == "camp_pan") CampSwapPan();
         if (type == "camp_dispose") OpenVideo();
         if (campCleared >= CAMP_TOTAL && !campDoneShown)
         {
             campDoneShown = true;
             StartCoroutine(CampDoneCo());
         }
+    }
+
+    // ---------- 해소 연출 ----------
+    /// 텐트: 버너를 밖(안전 조리 구역)으로 옮기고 → 측면·후면 플랩을 열어 환기
+    IEnumerator CampTentFixCo()
+    {
+        var burner = GameObject.Find("C_TentBurner");
+        if (burner != null)
+        {
+            var from = burner.transform.position;
+            var to = new Vector3(7.5f, 1.05f, 9.2f);   // 야외 조리 테이블 옆
+            float t = 0f, dur = 0.9f;
+            while (t < dur)
+            {
+                t += Time.deltaTime;
+                float k = Mathf.Clamp01(t / dur);
+                var p = Vector3.Lerp(from, to, k);
+                p.y += Mathf.Sin(k * Mathf.PI) * 1.6f;
+                burner.transform.position = p;
+                burner.transform.Rotate(0, 360f * Time.deltaTime, 0);
+                yield return null;
+            }
+            burner.transform.position = to;
+            burner.transform.rotation = Quaternion.Euler(0, -90f, 0);
+            SKSound.Sfx("sfx_popup", 0.8f, 1.2f);
+        }
+        // 환기: 플랩 열림(측면·후면 패널 접힘) + 바람 이펙트
+        CampOpenFlaps();
+        AddFloat(new Vector3(4.5f, 2.2f, 2.4f), "환기 완료!");
+        var wind = Resources.Load<GameObject>("VFX/CFXR4 Wind Trails");
+        if (wind != null)
+        {
+            var w = Instantiate(wind);
+            w.transform.position = new Vector3(4.5f, 1.0f, 3.4f);
+            w.transform.rotation = Quaternion.LookRotation(new Vector3(0, 0.2f, 1f));
+            var ps = w.GetComponent<ParticleSystem>();
+            if (ps != null) ps.Play(true);
+            Destroy(w, 3.5f);
+        }
+        SKSound.Sfx("sfx_vent", 0.85f);
+    }
+
+    /// 텐트 측면·후면 환기 플랩 열기 (닫힘 패널 3장을 접어 올림)
+    void CampOpenFlaps()
+    {
+        for (int i = 1; i <= 3; i++)
+        {
+            var f = GameObject.Find("C_TentFlap" + i);
+            if (f == null) continue;
+            StartCoroutine(FlapOpenCo(f.transform));
+        }
+    }
+
+    IEnumerator FlapOpenCo(Transform f)
+    {
+        var s0 = f.localScale;
+        float t = 0f;
+        while (t < 0.5f)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / 0.5f);
+            f.localScale = new Vector3(s0.x, Mathf.Lerp(s0.y, s0.y * 0.08f, k), s0.z);
+            yield return null;
+        }
+        f.gameObject.SetActive(false);
+    }
+
+    /// 모닥불 옆 캔 → 안전지대 바구니로 비행 (towel 연출 재사용 문법)
+    void FlyToSafeZone(string objName)
+    {
+        var go = GameObject.Find(objName);
+        if (go == null) return;
+        var basket = GameObject.Find("SafeBasket");
+        Vector3 to = basket != null ? RB(basket).center + new Vector3(0, 0.3f, 0) : new Vector3(4.3f, 1.0f, 8.6f);
+        StartCoroutine(FlyObjCo(go.transform, to));
+    }
+
+    IEnumerator FlyObjCo(Transform tr, Vector3 to)
+    {
+        var from = tr.position;
+        float t = 0f, dur = 0.85f;
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / dur);
+            var p = Vector3.Lerp(from, to, k);
+            p.y += Mathf.Sin(k * Mathf.PI) * 2.0f;
+            tr.position = p;
+            tr.Rotate(0, 420f * Time.deltaTime, 0);
+            yield return null;
+        }
+        tr.position = to;
+        SKSound.Sfx("sfx_popup", 0.8f, 1.25f);
+        AddFloat(to + new Vector3(0, 0.4f, 0), "안전지대로!");
+    }
+
+    /// 호일 링 제거 (구겨지듯 축소)
+    void CampRemoveFoil()
+    {
+        var f = GameObject.Find("C_FoilRing");
+        if (f != null) StartCoroutine(ShrinkAway(f.transform));
+        AddFloat(SKData.HZ_CAMP["camp_foil"] + new Vector3(0, 0.5f, 0), "호일 제거!");
+    }
+
+    /// 과대불판 → 작은 팬으로 교체 (스케일 축소)
+    void CampSwapPan()
+    {
+        var p = GameObject.Find("C_BigPan");
+        if (p == null) return;
+        StartCoroutine(ScaleTo(p.transform, p.transform.localScale * 0.55f));
+        AddFloat(SKData.HZ_CAMP["camp_pan"] + new Vector3(0, 0.5f, 0), "작은 팬으로!");
+    }
+
+    IEnumerator ShrinkAway(Transform tr)
+    {
+        var s0 = tr.localScale;
+        float t = 0f;
+        while (t < 0.35f)
+        {
+            t += Time.deltaTime;
+            tr.localScale = Vector3.Lerp(s0, s0 * 0.01f, t / 0.35f);
+            tr.Rotate(0, 720f * Time.deltaTime, 0);
+            yield return null;
+        }
+        Destroy(tr.gameObject);
+    }
+
+    IEnumerator ScaleTo(Transform tr, Vector3 target)
+    {
+        var s0 = tr.localScale;
+        float t = 0f;
+        while (t < 0.4f)
+        {
+            t += Time.deltaTime;
+            tr.localScale = Vector3.Lerp(s0, target, t / 0.4f);
+            yield return null;
+        }
+        tr.localScale = target;
     }
 
     IEnumerator CampDoneCo()

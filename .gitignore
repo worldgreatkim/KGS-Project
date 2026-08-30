@@ -63,3 +63,8 @@ Thumbs.db
 # 빌드 산출물 (대용량)
 /Builds/
 
+
+# 스토어 에셋 (재배포 불가)
+/Assets/SimpleNaturePack/
+/Assets/SimpleNaturePack.meta
+

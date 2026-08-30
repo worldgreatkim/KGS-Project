@@ -229,3 +229,14 @@ Counter 위에 올린건 좋은데 가스레인지가 넘 작아. 카운터가 �
 - 컴파일 0에러. 플레이: TG_MOVE/TG_SPRINT 직접 세팅으로 거리 실측(5.72/10.65m), 스냅 눈검수(화살표 북서 원거리·대화창 비겹침·게이지 숨김)
 ### 실패와 수정
 - 1차 8방향·2차 16방향+코너 후보가 클램프·Blocked로 단거리 낙착 — 통로 그리드 고정 후보로 전환 해결
+
+## [구현] 캠핑 에셋 반입 — Kenney CC0 20종 + Nature Pack — 2026-08-30 21:00
+### 프롬프트
+무료 에셋 괜찮은거 있으면 얘기해봐 / Low-Poly Simple Nature Pack 다운받았고 kenney_survival-kit은 가스에셋공사에 넣어놨어
+### 조작 내역
+- 가스공사 에셋 폴더 연결 → kenney_survival-kit.zip 해제 → GLB 20종 선별(tent-canvas·campfire-pit·tree 3종·rock 3종·grass·fence·bucket·bedroll·signpost·workbench 등) → gltf-transform cp로 텍스처 임베드 변환 → Assets/Kenney/ 이식
+- SimpleNaturePack(스토어)은 gitignore 추가, Kenney(CC0)는 저장소 포함. ASSET_CREDITS에 CC0 섹션 신설
+### 검증
+- Unity 임포트 후 진단 렌더: 나무·tent-canvas(A자+천) 텍스처 정상. 유닛 스케일 ~0.5m — 씬 배치 시 2~3배 확대 필요 메모
+### 실패와 수정
+- tent.glb는 뼈대만(프레임) — 완성형은 tent-canvas.glb로 확인

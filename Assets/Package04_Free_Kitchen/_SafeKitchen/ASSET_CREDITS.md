@@ -10,6 +10,13 @@
 | Cartoon FX Remaster Free (VFX: 화재·연기·뿅·바람) | Unity Asset Store, Jean Moreno (JMO) | Unity Asset Store 표준 EULA — 사용 프리팹은 Resources/VFX에 복사본 |
 | Fog Particles (가스 누출 안개 — 회색 틴트·알파 곡선 커스텀) | Unity Asset Store | Unity Asset Store 표준 EULA — Whitish Fog를 Resources/VFX/GasFog로 복사 |
 
+## CC0 (퍼블릭 도메인 — 저장소 포함 가능)
+
+| 에셋 | 출처 | 라이선스 |
+|---|---|---|
+| Assets/Kenney/K_*.glb (캠핑·자연 20종: 텐트·모닥불·나무·바위·울타리 등) | Kenney Survival Kit (kenney.nl) | CC0 1.0 — 텍스처 임베드 변환(gltf-transform) 후 이식 (2026-08-30) |
+| SimpleNaturePack (Assets/SimpleNaturePack) | Unity Asset Store, JustCreate | Unity Asset Store 표준 EULA — 재배포 불가, 저장소 제외 |
+
 ## 생성형 AI 에셋 (2단계 파이프라인: Gemini 이미지 → Tripo AI image-to-3D)
 
 - 이미지 생성: Google Gemini (나노바나나) — 프롬프트: `TRIPO_프롬프트.md` 참조, 원본 이미지: `refs/` 폴더

@@ -458,3 +458,30 @@ B로 진행해
 ### 실패와 수정
 - 파일만 수정하고 Unity 리프레시 없이 플레이해 **구 어셈블리가 돌아 rot=100·scale=1 이 나왔다**(연출 미적용으로 오인).
   AssetDatabase.Refresh + RequestScriptCompilation 후 재검증. 앞으로 파일 도구로 코드를 고친 뒤에는 반드시 명시적 재컴파일을 건다.
+
+## [수정] 캠핑 진입 텐트를 Gemini→Tripo 에셋으로 교체 (3단 상태) — 2026-08-31 05:20
+### 프롬프트
+다 좋은데 텐트 주변 에셋이 안어울린다 말이야. 일단 제미나이로 텐트를 만들어서 한번 적용해보는건 어떄?
+> 맥락: 절차 생성 텐트(C_TentAF)가 주변 Tripo 캠핑 킷·켄니 자연물과 스타일이 겉돌았다.
+> 이후 동현님이 Gemini로 3장(문닫+창닫 / 문열+창닫 / 문열+창열)을 생성해 가스공사 에셋에 넣음
+### 조작 내역
+- 이미지 전처리: RGBA→흰 배경 합성 + 가로 1400px 리사이즈(3.1~3.6MB → 0.6MB), refs/ 로 복사
+- SKTripo.Submit ×3 → Poll(전부 success 100%) → Harvest
+  · Camp_TentHouse.png     → CampTentHouse.glb
+  · Camp_TentHouseDoor.png → CampTentHouseDoor.glb
+  · Camp_TentHouseOpen.png → CampTentHouseOpen.glb
+- gltf-transform weld→simplify(0.35/0.0008)→prune: 각 15MB → 5.5~5.7MB
+- 방향 실측: 4방향(yaw 0/90/180/270) 나란히 배치 후 스냅 비교 → **yaw 90이 정면**(기존 돔 텐트와 동일)
+- 배치: (4.5, 0, 2.40) rot(0,90,0) scale 4.30, 정점 실측으로 바닥 안착.
+  실측 범위 x[2.5,6.5] z[0.25,4.55] 높이 2.86~3.05 — 데크 앞끝이 TENT_DOOR(z=5.0) 바로 앞
+- 코드: `tentHouse/tentHouseDoor/tentHouseOpen` 필드와 `TentPhaseCo(to)` 신설.
+  CampTentInitState가 3종이 다 있으면 GLB 3단 방식을 1순위로 쓰고(문닫 활성), 없으면 절차 텐트 → 기존 GLB 순으로 폴백.
+  진입 시 문닫→문열(창닫), 환기 성공 시 →문열+창열. 진입 후 '문 닫힘 복귀'는 절차 텐트일 때만 수행
+- 절차 생성 텐트 C_TentAF는 삭제하지 않고 비활성(롤백 대비)
+### 검증
+- 컴파일 Error 0건
+- 에디터 스냅 3장: 방향 4종 비교 / 배치 정면 / 3단 상태 나란히 비교 — 문·창 상태가 의도대로 구분됨
+- 플레이 검증: 시작 시 tentHouse=ON, TentEnterCo 후 tentHouseDoor=ON, CampSwapTentOpen 후 tentHouseOpen=ON
+- 환기 상태 게임뷰 스냅: 왼쪽 돔 텐트와 팔레트·렌더 톤이 일치해 이질감 해소 확인
+### 실패와 수정
+- 첫 배치에 yaw 180을 썼다가 측면이 정면으로 왔다. 방향 비교 스냅에서 **카메라가 -Z를 보므로 월드 +X가 화면 왼쪽**이라는 점을 빠뜨려 순서를 반대로 읽은 탓. 실제 정답은 yaw 90

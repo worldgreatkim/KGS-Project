@@ -176,7 +176,8 @@ public partial class SKMain
         pbody.rotation = Quaternion.Euler(0, 180f, 0);                       // 텐트 쪽(−Z)을 향해
         // 문이 먼저 양옆으로 열린다
         SKSound.Sfx("sfx_window", 0.55f);
-        yield return StartCoroutine(FlapSetCo(true, 0.40f));
+        if (tentHouseDoor != null) yield return StartCoroutine(TentPhaseCo(tentHouseDoor));
+        else yield return StartCoroutine(FlapSetCo(true, 0.40f));
         campWalking = true;
         float wt = 0f, wdur = 1.45f;
         while (wt < wdur)
@@ -188,7 +189,8 @@ public partial class SKMain
             yield return null;
         }
         campWalking = false;
-        StartCoroutine(FlapSetCo(false, 0.35f));   // 뒤에서 문이 닫힌다
+        // 절차 텐트일 때만 뒤에서 문을 닫는다 (GLB 3단 상태는 '문 열림'을 유지)
+        if (tentHouseDoor == null) StartCoroutine(FlapSetCo(false, 0.35f));
 
         // 2) 암전 (플레이어는 이미 텐트에 가려져 보이지 않는다)
         yield return StartCoroutine(FadeOut());
@@ -635,12 +637,25 @@ public partial class SKMain
     /// 없으면 예전 방식(닫힌 텐트 → 열린 텐트 GLB 교체)로 폴백
     void CampSwapTentOpen()
     {
+        if (tentHouseOpen != null) { StartCoroutine(TentPhaseCo(tentHouseOpen)); return; }
         if (flapL != null && flapR != null) { StartCoroutine(FlapOpenCo()); return; }
         if (tentClosed == null || tentOpen == null) return;
         StartCoroutine(TentSwapCo(tentClosed, tentOpen));
     }
 
     Transform flapL, flapR, winL, winR;
+    Transform tentHouse, tentHouseDoor, tentHouseOpen;   // 문닫·문열(창닫)·문열+창열
+
+    /// 3단 상태 텐트를 to 상태로 교체 — 지금 켜져 있는 것을 찾아 팝 연출로 넘긴다
+    IEnumerator TentPhaseCo(Transform to)
+    {
+        if (to == null) yield break;
+        Transform from = null;
+        foreach (var t in new[] { tentHouse, tentHouseDoor, tentHouseOpen })
+            if (t != null && t != to && t.gameObject.activeSelf) from = t;
+        if (from == null) { to.gameObject.SetActive(true); yield break; }
+        yield return StartCoroutine(TentSwapCo(from, to));
+    }
 
     IEnumerator FlapOpenCo()
     {
@@ -725,7 +740,19 @@ public partial class SKMain
     /// 시작 상태 정리 — 닫힌 텐트 노출, 열린 텐트 숨김 (에셋 준비 전엔 무동작)
     void CampTentInitState()
     {
-        // 절차 생성 텐트(C_TentAF)가 있으면 문짝을 닫힌 각도로 리셋
+        // 1순위: 3단 상태 GLB 텐트 (문닫·문열·문열+창열)
+        tentHouse = FindKitchenChild("C_TentHouse");
+        tentHouseDoor = FindKitchenChild("C_TentHouseDoor");
+        tentHouseOpen = FindKitchenChild("C_TentHouseOpen");
+        if (tentHouse != null && tentHouseDoor != null && tentHouseOpen != null)
+        {
+            tentHouse.gameObject.SetActive(true);
+            tentHouseDoor.gameObject.SetActive(false);
+            tentHouseOpen.gameObject.SetActive(false);
+            return;
+        }
+
+        // 2순위: 절차 생성 텐트(C_TentAF)가 있으면 문짝을 닫힌 각도로 리셋
         flapL = FindKitchenChild("flapL");
         flapR = FindKitchenChild("flapR");
         winL = FindKitchenChild("winL");

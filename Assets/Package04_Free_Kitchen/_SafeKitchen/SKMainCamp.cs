@@ -53,6 +53,7 @@ public partial class SKMain
             uid++;
             hazards.Add(new Hz { id = uid, type = key, def = def, node = node, bang = bang, ttl = def.ttl, reach = 2.2f });
         }
+        CampTentInitState();
         BuildCampList();
         BuildVideoPanel();
         Say("캠핑장 곳곳의 위험 5곳을 찾아 고쳐 보자!", 5f);
@@ -136,8 +137,8 @@ public partial class SKMain
             burner.transform.rotation = Quaternion.Euler(0, -90f, 0);
             SKSound.Sfx("sfx_popup", 0.8f, 1.2f);
         }
-        // 환기: 플랩 열림(측면·후면 패널 접힘) + 바람 이펙트
-        CampOpenFlaps();
+        // 환기: 닫힌 텐트 → 열린 텐트로 교체 + 바람 이펙트
+        CampSwapTentOpen();
         AddFloat(new Vector3(4.5f, 2.2f, 2.4f), "환기 완료!");
         var wind = Resources.Load<GameObject>("VFX/CFXR4 Wind Trails");
         if (wind != null)
@@ -152,29 +153,61 @@ public partial class SKMain
         SKSound.Sfx("sfx_vent", 0.85f);
     }
 
-    /// 텐트 측면·후면 환기 플랩 열기 (닫힘 패널 3장을 접어 올림)
-    void CampOpenFlaps()
+    // 텐트 교체 대상 (비활성 오브젝트라 GameObject.Find로는 못 찾음 — 시작 시 캐시)
+    Transform tentClosed, tentOpen;
+
+    /// Kitchen 자식에서 이름으로 찾기 (비활성 포함)
+    Transform FindKitchenChild(string name)
     {
-        for (int i = 1; i <= 3; i++)
-        {
-            var f = GameObject.Find("C_TentFlap" + i);
-            if (f == null) continue;
-            StartCoroutine(FlapOpenCo(f.transform));
-        }
+        var k = GameObject.Find("Kitchen");
+        if (k == null) return null;
+        foreach (var t in k.GetComponentsInChildren<Transform>(true))
+            if (t.name == name) return t;
+        return null;
     }
 
-    IEnumerator FlapOpenCo(Transform f)
+    /// 환기: 닫힌 텐트 → 열린 텐트 교체 (에셋 없으면 조용히 생략)
+    void CampSwapTentOpen()
     {
-        var s0 = f.localScale;
+        if (tentClosed == null || tentOpen == null) return;
+        StartCoroutine(TentSwapCo(tentClosed, tentOpen));
+    }
+
+    IEnumerator TentSwapCo(Transform closed, Transform open)
+    {
+        // 닫힌 텐트가 살짝 부푼 뒤 사라지고 열린 텐트가 팝인 — 플랩이 걷히는 인상
+        var c0 = closed.localScale;
         float t = 0f;
-        while (t < 0.5f)
+        while (t < 0.18f)
         {
             t += Time.deltaTime;
-            float k = Mathf.Clamp01(t / 0.5f);
-            f.localScale = new Vector3(s0.x, Mathf.Lerp(s0.y, s0.y * 0.08f, k), s0.z);
+            closed.localScale = c0 * Mathf.Lerp(1f, 1.06f, t / 0.18f);
             yield return null;
         }
-        f.gameObject.SetActive(false);
+        closed.gameObject.SetActive(false);
+        closed.localScale = c0;
+
+        var o0 = open.localScale;
+        open.gameObject.SetActive(true);
+        open.localScale = o0 * 0.94f;
+        t = 0f;
+        while (t < 0.22f)
+        {
+            t += Time.deltaTime;
+            open.localScale = Vector3.Lerp(o0 * 0.94f, o0, t / 0.22f);
+            yield return null;
+        }
+        open.localScale = o0;
+    }
+
+    /// 시작 상태 정리 — 닫힌 텐트 노출, 열린 텐트 숨김 (에셋 준비 전엔 무동작)
+    void CampTentInitState()
+    {
+        tentClosed = FindKitchenChild("C_CampTentClosed");
+        tentOpen = FindKitchenChild("C_CampTentOpen");
+        if (tentClosed == null || tentOpen == null) return;
+        tentClosed.gameObject.SetActive(true);
+        tentOpen.gameObject.SetActive(false);
     }
 
     /// 모닥불 옆 캔 → 안전지대 바구니로 비행 (towel 연출 재사용 문법)

@@ -34,6 +34,7 @@ public static class SKIn
             case KeyCode.Alpha1: return kb.digit1Key;
             case KeyCode.Alpha2: return kb.digit2Key;
             case KeyCode.Alpha3: return kb.digit3Key;
+            case KeyCode.Alpha4: return kb.digit4Key;
             case KeyCode.Keypad1: return kb.numpad1Key;
             case KeyCode.Keypad2: return kb.numpad2Key;
             case KeyCode.Keypad3: return kb.numpad3Key;
@@ -232,6 +233,7 @@ public partial class SKMain : MonoBehaviour
         FpInit();
         UxInit();
         UltInit();
+        CampInit();
         SKSound.Init(gameObject);
         SKSound.Music("bgm_title", 0.45f);
         SKSound.Loop(0, "amb_boil", 0.30f);
@@ -866,6 +868,7 @@ public partial class SKMain : MonoBehaviour
             FxCorrect();
             BadgeProgress();   // 점검왕·콤보 배지 진행
             UltCharge();       // 올바른 행동 → 필살기 게이지
+            CampOnCorrect(openEv.type);   // 캠핑 체크리스트
             Say(openEv.def.toast, 3f);
             StartCoroutine(Pop(openEv.node));
             hazards.Remove(openEv);
@@ -1820,8 +1823,8 @@ public partial class SKMain : MonoBehaviour
             {
                 PlayerPrefs.SetInt("sktut", 0);   // 훈련 다시 받기
             }
-            for (int si = 0; si < 3; si++)
-                if (titleT > 0.4f && SKIn.Down(si == 0 ? KeyCode.Alpha1 : si == 1 ? KeyCode.Alpha2 : KeyCode.Alpha3)
+            for (int si = 0; si < SCENES.Length; si++)
+                if (titleT > 0.4f && SKIn.Down(si == 0 ? KeyCode.Alpha1 : si == 1 ? KeyCode.Alpha2 : si == 2 ? KeyCode.Alpha3 : KeyCode.Alpha4)
                     && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != SCENES[si])
                 {
                     UnityEngine.SceneManagement.SceneManager.LoadScene(SCENES[si]);
@@ -1847,7 +1850,12 @@ public partial class SKMain : MonoBehaviour
         // 튜토리얼 건너뛰기
         if (TutActive && SKIn.Down(KeyCode.F1)) { TutFinish(true); }
 
-        // 랭크·일시정지 (모달 입력 우선)
+        // 랭크·일시정지·영상 (모달 입력 우선)
+        if (videoOpen)
+        {
+            if (SKIn.Down(KeyCode.Space) || SKIn.Down(KeyCode.Escape) || SKIn.MouseDown()) CloseVideo();
+            return;
+        }
         if (RankUpdate()) return;
         if (SKIn.Down(KeyCode.Escape)) TogglePause();
         if (PauseUpdate()) return;
@@ -2014,6 +2022,7 @@ public partial class SKMain : MonoBehaviour
             {
                 TutUpdate(dt);   // 튜토리얼 중엔 스폰·타이머·지진 정지
             }
+            else if (CampUpdate(dt)) { }   // 캠핑 교육 모드 — 타이머·지진·아차 없음
             else
             {
             // 지진 예고: 본지진 1.2초 전 럼블 + 미세 진동 + 조명 깜빡

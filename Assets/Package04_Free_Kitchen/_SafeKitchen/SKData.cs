@@ -74,6 +74,47 @@ public static class SKData
         {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
     };
 
+    // ---- 캠핑 교육 스테이지 (SafeKitchen3D_CAMP) — 시간 무제한, 체크리스트 5종 ----
+    public static readonly Dictionary<string, Vector3> HZ_CAMP = new Dictionary<string, Vector3>
+    {
+        {"camp_tent",    new Vector3(4.5f,  0.8f, 3.6f)},    // 텐트 안 버너
+        {"camp_foil",    new Vector3(7.5f,  0.9f, 9.2f)},    // 호일 감은 삼발이
+        {"camp_pan",     new Vector3(11.2f, 1.0f, 8.9f)},    // 과대불판
+        {"camp_can",     new Vector3(12.0f, 0.5f, 4.9f)},    // 모닥불 옆 부탄캔
+        {"camp_dispose", new Vector3(16.5f, 0.5f, 8.5f)},    // 다 쓴 캔 폐기 더미
+    };
+
+    public static readonly Dictionary<string, Ev> EV_CAMP = new Dictionary<string, Ev>
+    {
+        {"camp_tent", new Ev { q = "텐트 안에서 버너를 쓰고 있어!", ttl = 99999f,
+            toast = "텐트 안 가스기기 사용 절대 금지 — 일산화탄소 중독 위험!",
+            icons = new List<Opt> {
+                new Opt { t = "버너를 텐트 밖으로 옮긴다", ok = true },
+                new Opt { t = "문만 닫고 계속 쓴다", no = "밀폐되면 일산화탄소가 쌓여!" },
+                new Opt { t = "잠깐이면 괜찮아", no = "텐트 안 가스기기는 절대 금지!" } } } },
+        {"camp_foil", new Ev { q = "삼발이에 은박 호일을 감아놨어!", ttl = 99999f,
+            toast = "호일·삼발이커버는 열을 가둬 부탄캔 폭발 위험!",
+            icons = new List<Opt> {
+                new Opt { t = "호일을 걷어낸다", ok = true },
+                new Opt { t = "보온되니 그대로 둔다", no = "열이 캔으로 몰려 폭발 위험!" } } } },
+        {"camp_pan", new Ev { q = "캔보다 큰 불판이 올려져 있어!", ttl = 99999f,
+            toast = "과대불판은 부탄캔을 데워 파열 위험!",
+            icons = new List<Opt> {
+                new Opt { t = "작은 팬으로 바꾼다", ok = true },
+                new Opt { t = "빨리 구우면 돼", no = "빨리 해도 열은 쌓여!" } } } },
+        {"camp_can", new Ev { q = "모닥불 옆에 부탄캔이 있어!", ttl = 99999f,
+            toast = "부탄캔은 화기·직사광선에서 멀리 보관!",
+            icons = new List<Opt> {
+                new Opt { t = "그늘 보관함으로 옮긴다", ok = true },
+                new Opt { t = "곧 쓸 거니까 그대로", no = "열 받으면 캔이 터져!" } } } },
+        {"camp_dispose", new Ev { q = "다 쓴 부탄캔, 어떻게 버릴까?", ttl = 99999f,
+            toast = "환기되는 야외에서 잔가스 배출 후 구멍 뚫어 분리배출!",
+            icons = new List<Opt> {
+                new Opt { t = "야외에서 잔가스 빼고 구멍 뚫어 배출", ok = true },
+                new Opt { t = "그냥 쓰레기통에 버린다", no = "잔가스가 남아 있으면 위험해!" },
+                new Opt { t = "모닥불에 던져 태운다", no = "절대 안돼! 폭발해!" } } } },
+    };
+
     // ---- 위험 이벤트 (주방 8종) ----
     public static readonly Dictionary<string, Ev> EV = new Dictionary<string, Ev>
     {

@@ -124,7 +124,7 @@ public partial class SKMain
         st.font = font; st.fontSize = 15;
         string cur = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         var sb2 = new System.Text.StringBuilder();
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < SCENES.Length; i++)
             sb2.Append((cur == SCENES[i] ? "▶" : "") + "[" + (i + 1) + "] " + SCENE_NAMES[i] + "   ");
         sb2.Append(PlayerPrefs.GetInt("sktut", 0) == 1 ? "· [G] 훈련 다시 받기" : "");
         st.text = sb2.ToString();

@@ -21,8 +21,8 @@ public partial class SKMain
     float stepT;          // 발소리 타이머
 
     // ---- 씬 선택 (타이틀) ----
-    static readonly string[] SCENES = { "SafeKitchen3D", "SafeKitchen3D_FP", "SafeKitchen3D_MOD" };
-    static readonly string[] SCENE_NAMES = { "기본 주방", "넓은 주방", "모듈 주방" };
+    static readonly string[] SCENES = { "SafeKitchen3D", "SafeKitchen3D_FP", "SafeKitchen3D_MOD", "SafeKitchen3D_CAMP" };
+    static readonly string[] SCENE_NAMES = { "기본 주방", "넓은 주방", "모듈 주방", "캠핑장 교육" };
 
     // ---- 궁극기: 배기통 레인저 "가스 흡수" (KGS 공식 설정 — 손바닥으로 유출 가스를 빨아들임) ----
     int ultGauge;                 // 0~ULT_MAX. 정답·잔불 진압·미니게임 성공으로 충전

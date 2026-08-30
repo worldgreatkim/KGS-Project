@@ -240,3 +240,18 @@ Counter 위에 올린건 좋은데 가스레인지가 넘 작아. 카운터가 �
 - Unity 임포트 후 진단 렌더: 나무·tent-canvas(A자+천) 텍스처 정상. 유닛 스케일 ~0.5m — 씬 배치 시 2~3배 확대 필요 메모
 ### 실패와 수정
 - tent.glb는 뼈대만(프레임) — 완성형은 tent-canvas.glb로 확인
+
+## [구현] 캠핑 교육 스테이지 뼈대 — CAMP 씬·체크리스트·영상 패널 — 2026-08-30 22:10
+### 프롬프트
+그래 진행해
+> 맥락: [설계] 승인 — 캠핑 교육 전용(시간·점수 없음), 위험 5종(텐트 버너·호일 삼발이·과대불판·모닥불 옆 캔·폐기), 폐기는 퀴즈 정답 시 KGS 영상 재생
+### 조작 내역
+- SafeKitchen3D_CAMP.unity: 기본 씬 복제 → 벽·램프·주방가구 철거, 잔디 바닥(CampGrass.mat), Kenney 배치(텐트 2·모닥불·통나무 2·나무 4·바위·풀·울타리 5·표지판·양동이), 대피탁자존 남서 이동, GasProps butane 세트 유지
+- SKData: HZ_CAMP 5좌표 + EV_CAMP 5이벤트(영상 수칙 문구 그대로)
+- SKMainCamp.cs 신규: campMode 판정·5종 스폰(ttl 무한)·체크리스트 UI(좌상단 5칸)·수료 연출(CampDoneCo)·영상 패널(VideoPlayer+RawImage, Resources/UI/CampDispose 없으면 폴백 토스트)·CampUpdate(빌보드만, 타이머·지진·아차 무효)·외곽 마루 숲초록/하늘 배경
+- SKMain 훅: CampInit, 게임 루프 else-if 분기, Choose 정답→CampOnCorrect, videoOpen 모달, HUD 숨김, 타이틀 [4] 캠핑장(SCENES 4씬·Alpha4·SKBadges 루프), EditorBuildSettings 4씬
+### 검증
+- 컴파일 0에러. 플레이: campMode=True·hazards 5·체크리스트 표시·camp_tent 정답 → ✓체크+토스트+100, camp_dispose 정답 → campCleared=2·폴백 경로 무에러. 조감 스냅 눈검수
+### 실패와 수정
+- BuildOuterDeco가 배경·외곽을 다크우드로 덮음 → CampUpdate 첫 프레임에 하늘색+숲초록 재설정
+- 검증 중 사용자 에디터 조작(씬 전환)과 교차 — CAMP 재오픈 후 재검증

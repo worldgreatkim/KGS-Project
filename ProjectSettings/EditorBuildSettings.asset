@@ -14,6 +14,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/SafeKitchen3D_MOD.unity
     guid: 0593063daa61e9648b1bf7771dcddc7b
+  - enabled: 1
+    path: Assets/SafeKitchen3D_CAMP.unity
+    guid: 8065922b1122e0d4daf23e1069c00dee
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -173,6 +173,9 @@ public partial class SKMain : MonoBehaviour
 
     void Awake()
     {
+        // 이전 씬이 랭크·퀴즈로 timeScale 0인 채 넘어오면 새 씬이 얼어붙는다 — 무조건 되돌린다
+        Time.timeScale = 1f;
+        rankShown = false;
         cam = Camera.main;
         DetectMap();   // 씬(맵 버전) 판정 — 좌표·시점 분기의 기준
         bool modKit = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.EndsWith("_MOD");

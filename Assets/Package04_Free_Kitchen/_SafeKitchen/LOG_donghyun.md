@@ -792,3 +792,24 @@ B로 진행해
 ### 실패와 수정
 - 검증 중 플레이 모드가 반복적으로 조용히 종료돼 중간 프레임 포착에 실패. 구조·수치는 계측으로 확인했고
   **최종 체감(바람 세기·지속)은 눈으로 봐야 판정되는 항목**으로 남긴다
+
+## [구현] 훈련(MOD) → 캠핑장(CAMP) 자동 연결 + v0.4 빌드 — 2026-08-31 16:10
+### 프롬프트
+우리 게임 시작 화면에서 시작하면,SafeKitchen3D_MOD 맵에서 훈련이 시작되고 모든 상황을 다 해결하면 이제 자동으로 SafeKitchen3D_CAMP 넘어가도록 구성하고 빌드 진행하자. 저번처럼 파일만 있으면 바로 게임 플레이 할 수 있도록
+### 조작 내역
+- 빌드 씬 순서 재정렬: **[0] MOD** · [1] CAMP · [2] 기본 주방 · [3] 넓은 주방 → exe가 훈련 맵에서 시작
+- `SKMainUX`에 다음 스테이지 연결 추가:
+  · 랭크 패널 하단에 안내 줄(`rankNextT`) 신설
+  · `ShowRank()`에서 현재 씬이 `SafeKitchen3D_MOD`면 `NextStageCo()` 시작
+  · 랭크 화면은 timeScale 0이라 **unscaledDeltaTime**으로 6초 카운트다운, `[SPACE]`로 즉시 이동, 이후 `LoadScene("SafeKitchen3D_CAMP")`
+- **얼어붙는 버그 차단**: 이전 씬이 랭크·퀴즈로 timeScale 0인 채 넘어오면 새 씬이 정지 상태로 시작한다.
+  `SKMain.Awake()` 선두에 `Time.timeScale = 1f; rankShown = false;` 추가
+- 빌드: Windows x64, `Build_v04/SafeKitchen.exe`, 압축본 `Builds/SafeKitchen_v04_win64.zip` (562MB, v03은 309MB)
+### 검증
+- 컴파일 Error 0건
+- 플레이 계측: 시작 씬=SafeKitchen3D_MOD / timeScale=1 / rankShown=False
+  → ShowRank 후 안내 "다음 — 캠핑장 교육 (6초) · [SPACE] 바로 이동"
+  → 6초 뒤 씬=SafeKitchen3D_CAMP / timeScale=1 / rankShown=False / campMode=True (얼지 않음)
+- 빌드 산출물 213개 파일, exe·UnityPlayer.dll·Data 정상 생성
+### 실패와 수정
+- Awake 보정 전에는 CAMP로 넘어간 뒤 timeScale이 0으로 남아 게임이 얼었다. 씬 진입 시 강제 복구로 해결

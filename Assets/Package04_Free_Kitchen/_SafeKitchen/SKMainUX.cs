@@ -358,7 +358,28 @@ public partial class SKMain
 
     // ---------- 결과 랭크 ----------
     GameObject rankStars, rankBadgeRow;
-    Text rankGrade, rankScoreT, rankMsgT;
+    Text rankGrade, rankScoreT, rankMsgT, rankNextT;
+
+    // 훈련 맵 → 다음 스테이지
+    const string TRAIN_SCENE = "SafeKitchen3D_MOD";
+    const string NEXT_SCENE = "SafeKitchen3D_CAMP";
+
+    /// 훈련을 마치면 캠핑장 교육으로 자동 연결 (랭크 화면은 timeScale 0이라 unscaled로 센다)
+    IEnumerator NextStageCo()
+    {
+        float wait = 6f, t = 0f;
+        while (t < wait)
+        {
+            t += Time.unscaledDeltaTime;
+            if (rankNextT != null)
+                rankNextT.text = "다음 — 캠핑장 교육 (" + Mathf.CeilToInt(wait - t) + "초)   ·   [SPACE] 바로 이동";
+            if (SKIn.Down(KeyCode.Space)) break;
+            yield return null;
+        }
+        Time.timeScale = 1f;
+        SKSound.VoStop();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(NEXT_SCENE);
+    }
 
     void BuildRankUI()
     {
@@ -390,8 +411,11 @@ public partial class SKMain
         // 메시지 + 재시작
         CPanel(pnRank.transform, 0, -130, 560, 32, Color.clear, out im);
         rankMsgT = Label(im.transform, "", 19, new Color(0.95f, 0.93f, 0.85f), TextAnchor.MiddleCenter);
-        CPanel(pnRank.transform, 0, -180, 560, 30, Color.clear, out im);
+        CPanel(pnRank.transform, 0, -178, 560, 28, Color.clear, out im);
         Label(im.transform, "[R] 다시 도전!   [T] 타이틀", 20, YELLOW, TextAnchor.MiddleCenter, true);
+        // 다음 스테이지 안내 (훈련 맵에서만 채워진다)
+        CPanel(pnRank.transform, 0, -208, 560, 26, Color.clear, out im);
+        rankNextT = Label(im.transform, "", 17, new Color(0.75f, 0.92f, 1f), TextAnchor.MiddleCenter, true);
         pnRank.SetActive(false);
     }
 
@@ -458,6 +482,13 @@ public partial class SKMain
         StartCoroutine(PopInPanel(pnRank.transform));
         Time.timeScale = 0f;
         SKSound.VoStop();
+        // 훈련 맵을 마쳤으면 캠핑장 교육으로 이어간다
+        if (rankNextT != null)
+        {
+            bool train = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == TRAIN_SCENE;
+            rankNextT.text = "";
+            if (train) StartCoroutine(NextStageCo());
+        }
         SKSound.Sfx("st_win", 0.8f);
         SKSound.Vo(vo);
         if (fpMode) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }

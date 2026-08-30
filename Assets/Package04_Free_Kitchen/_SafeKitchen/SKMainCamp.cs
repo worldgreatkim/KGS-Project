@@ -44,9 +44,10 @@ public partial class SKMain
         if (uiScore != null) uiScore.transform.parent.gameObject.SetActive(false);
         if (uiAcha != null) uiAcha.transform.parent.gameObject.SetActive(false);
         if (pnUlt != null) pnUlt.SetActive(false);   // 필살기도 교육 모드엔 비노출
-        // 위험 5곳 스폰 (시간 무제한)
+        // 위험 스폰 (시간 무제한) — camp_tent는 텐트 안에서 별도 등록
         foreach (var key in CAMP_KEYS)
         {
+            if (key == "camp_tent") continue;
             var def = SKData.EV_CAMP[key];
             var node = SpawnMarker(SKData.HZ_CAMP[key]);
             var bang = SpawnBang(node);
@@ -54,6 +55,7 @@ public partial class SKMain
             hazards.Add(new Hz { id = uid, type = key, def = def, node = node, bang = bang, ttl = def.ttl, reach = 2.2f });
         }
         CampTentInitState();
+        CampTentEnterInit();
         BuildCampList();
         BuildVideoPanel();
         Say("캠핑장 곳곳의 위험 5곳을 찾아 고쳐 보자!", 5f);
@@ -101,7 +103,7 @@ public partial class SKMain
         campChecks[type].text = "✓ " + CAMP_LABELS[idx];
         campChecks[type].color = new Color(0.5f, 0.95f, 0.6f);
         campCleared++;
-        if (type == "camp_tent") StartCoroutine(CampTentFixCo());
+        if (type == "camp_tent") StartCoroutine(TentExitCo());   // 밖으로 복귀 + 텐트 열림
         if (type == "camp_can") FlyToSafeZone("C_FireCan");
         if (type == "camp_foil") CampRemoveFoil();
         if (type == "camp_pan") CampSwapPan();
@@ -111,6 +113,195 @@ public partial class SKMain
             campDoneShown = true;
             StartCoroutine(CampDoneCo());
         }
+    }
+
+    // ---------- 텐트 진입 시퀀스 ----------
+    Transform tentInterior;      // 맵 밖 실내 구역 루트
+    Transform tentHeater;        // 실내 가스난로
+    GameObject tentDoorMark;     // 텐트 앞 느낌표 마커
+    bool inTent;                 // 실내 여부
+    string campPrompt;           // 이번 프레임 표시할 안내 (UpdateUI가 소비)
+    Vector3 outsidePos;          // 밖에서의 플레이어 위치 (복귀용)
+    bool heaterMoved;            // 난로를 안전지대로 옮겼는가
+    Hz heaterHz;                 // 실내 난로 위험 (퀴즈 대상)
+    static readonly Vector3 TENT_DOOR = new Vector3(4.5f, 0f, 5.0f);   // 텐트 앞 입구 지점
+
+    void CampTentEnterInit()
+    {
+        tentInterior = FindKitchenChild("TentInterior");
+        if (tentInterior == null) return;
+        tentHeater = FindKitchenChild("int_heater");
+        tentInterior.gameObject.SetActive(false);   // 평소엔 꺼둠
+
+        // 텐트 앞 느낌표 마커
+        tentDoorMark = SpawnMarker(TENT_DOOR + new Vector3(0, 0.2f, 0));
+        tentDoorMark.name = "tent_door_mark";
+        var bang = SpawnBang(tentDoorMark);
+        if (bang != null) bang.text = "!";
+    }
+
+    /// 매 프레임 — 입구 근접 시 프롬프트, SPACE 처리
+    /// 반환 true면 다른 상호작용(위험 퀴즈)보다 우선 소비
+    bool CampTentInteract()
+    {
+        if (!campMode || tentInterior == null) return false;
+        if (quizOpen || openEv != null || videoOpen) return false;
+
+        if (!inTent)
+        {
+            if (heaterMoved || tentDoorMark == null) return false;
+            float d = Vector2.Distance(new Vector2(player.position.x, player.position.z), new Vector2(TENT_DOOR.x, TENT_DOOR.z));
+            if (d > 2.2f) return false;
+            campPrompt = "[SPACE] 텐트 들어가기";
+            if (SKIn.Down(KeyCode.Space)) StartCoroutine(TentEnterCo());
+            return true;
+        }
+        return false;
+    }
+
+    IEnumerator TentEnterCo()
+    {
+        yield return StartCoroutine(FadeOut());
+        outsidePos = player.position;
+        inTent = true;
+        tentInterior.gameObject.SetActive(true);
+        if (tentDoorMark != null) tentDoorMark.SetActive(false);
+        // 플레이어·카메라 실내로
+        player.position = tentInterior.position + new Vector3(0, 0, 2.2f);
+        CampCamTo(tentInterior.position, 7.0f);
+        // 실내 위험(난로) 등록 — 기존 퀴즈 시스템 그대로 사용
+        if (heaterHz == null && tentHeater != null)
+        {
+            var def = SKData.EV_CAMP["camp_tent"];
+            var node = SpawnMarker(tentHeater.position + new Vector3(0, 0.9f, 0));
+            var bang = SpawnBang(node);
+            uid++;
+            heaterHz = new Hz { id = uid, type = "camp_tent", def = def, node = node, bang = bang, ttl = def.ttl, reach = 2.2f };
+            hazards.Add(heaterHz);
+        }
+        Say("텐트 안이야. 어? 가스난로가 켜져 있어!", 4f);
+        yield return StartCoroutine(FadeIn());
+    }
+
+    /// 퀴즈 정답 후: 밖으로 복귀 + 텐트 열림 + 난로가 텐트 앞에 나와 있음
+    IEnumerator TentExitCo()
+    {
+        yield return StartCoroutine(FadeOut());
+        inTent = false;
+        // 난로를 텐트 앞으로 이동 (실외 오브젝트로 재부모)
+        if (tentHeater != null)
+        {
+            tentHeater.SetParent(FindKitchenChild("Kitchen") ?? tentHeater.parent, true);
+            var k = GameObject.Find("Kitchen");
+            if (k != null) tentHeater.SetParent(k.transform, true);
+            tentHeater.position = new Vector3(4.5f, 0.1f, 5.6f);
+            tentHeater.rotation = Quaternion.Euler(0, 180f, 0);
+            tentHeater.name = "OutHeater";
+        }
+        tentInterior.gameObject.SetActive(false);
+        player.position = outsidePos;
+        CampCamRestore();
+        CampSwapTentOpen();          // 텐트 열림 (문·창문 개방)
+        SKSound.Sfx("sfx_vent", 0.85f);
+        var wind = Resources.Load<GameObject>("VFX/CFXR4 Wind Trails");
+        if (wind != null)
+        {
+            var w = Instantiate(wind);
+            w.transform.position = new Vector3(4.5f, 1.0f, 3.6f);
+            w.transform.rotation = Quaternion.LookRotation(new Vector3(0, 0.2f, 1f));
+            var ps = w.GetComponent<ParticleSystem>();
+            if (ps != null) ps.Play(true);
+            Destroy(w, 3.5f);
+        }
+        Say("환기 완료! 이제 난로를 안전지대로 옮기자 — 다가가서 [SPACE]", 5f);
+        yield return StartCoroutine(FadeIn());
+    }
+
+    /// 밖으로 나온 난로 → 안전지대 이송 (SPACE)
+    bool CampHeaterCarry()
+    {
+        if (!campMode || heaterMoved || inTent) return false;
+        var oh = GameObject.Find("OutHeater");
+        if (oh == null) return false;
+        float d = Vector2.Distance(new Vector2(player.position.x, player.position.z),
+                                   new Vector2(oh.transform.position.x, oh.transform.position.z));
+        if (d > 2.2f) return false;
+        campPrompt = "[SPACE] 안전지대로 옮기기";
+        if (SKIn.Down(KeyCode.Space))
+        {
+            heaterMoved = true;
+            var basket = GameObject.Find("SafeBasket");
+            Vector3 to = basket != null ? RB(basket).center + new Vector3(0.7f, 0.1f, 0) : new Vector3(5.2f, 0.3f, 8.6f);
+            StartCoroutine(FlyObjCo(oh.transform, to));
+            Say("잘했어! 가스난로는 텐트 밖 안전한 곳에 ★", 4f);
+            CampOnCorrect("camp_tent_done");
+        }
+        return true;
+    }
+
+    // 카메라 이동 (쿼터뷰 각도 유지)
+    Vector3 camSavePos; Quaternion camSaveRot; bool camSaved;
+    void CampCamTo(Vector3 center, float dist)
+    {
+        if (cam == null) return;
+        if (!camSaved) { camSavePos = cam.transform.position; camSaveRot = cam.transform.rotation; camSaved = true; }
+        float rad = 52f * Mathf.Deg2Rad;
+        cam.transform.position = center + new Vector3(0, Mathf.Sin(rad), Mathf.Cos(rad)) * dist;
+        cam.transform.rotation = Quaternion.Euler(52f, 180f, 0);
+        cam.backgroundColor = new Color(0.30f, 0.22f, 0.10f);   // 텐트 속 어둑한 톤
+        // 외곽 마루(캠핑장 초록)도 어둡게 — 실내에서 바깥 잔디가 비치지 않게
+        var of = GameObject.Find("outer_floor");
+        if (of != null)
+            foreach (var r in of.GetComponentsInChildren<Renderer>())
+                r.material.color = new Color(0.30f, 0.22f, 0.10f);
+    }
+    void CampCamRestore()
+    {
+        if (cam == null || !camSaved) return;
+        cam.transform.position = camSavePos;
+        cam.transform.rotation = camSaveRot;
+        cam.backgroundColor = new Color(0.55f, 0.78f, 0.92f);
+        var of = GameObject.Find("outer_floor");
+        if (of != null)
+            foreach (var r in of.GetComponentsInChildren<Renderer>())
+                r.material.color = new Color(0.24f, 0.42f, 0.26f);   // 숲 초록 복귀
+        camSaved = false;
+    }
+
+    // 화면 페이드 (전환 연출)
+    Image fadeImg;
+    IEnumerator FadeOut()
+    {
+        if (fadeImg == null)
+        {
+            var go = new GameObject("fade");
+            go.transform.SetParent(canvas.transform, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            fadeImg = go.AddComponent<Image>();
+        }
+        fadeImg.gameObject.SetActive(true);
+        float t = 0f;
+        while (t < 0.28f)
+        {
+            t += Time.deltaTime;
+            fadeImg.color = new Color(0, 0, 0, Mathf.Clamp01(t / 0.28f));
+            yield return null;
+        }
+        fadeImg.color = Color.black;
+    }
+    IEnumerator FadeIn()
+    {
+        if (fadeImg == null) yield break;
+        float t = 0f;
+        while (t < 0.35f)
+        {
+            t += Time.deltaTime;
+            fadeImg.color = new Color(0, 0, 0, 1f - Mathf.Clamp01(t / 0.35f));
+            yield return null;
+        }
+        fadeImg.gameObject.SetActive(false);
     }
 
     // ---------- 해소 연출 ----------
@@ -389,6 +580,15 @@ public partial class SKMain
             lp.y = 0.6f + Mathf.Sin(timeAll * 3f + hz.id) * 0.08f;
             hz.bang.transform.localPosition = lp;
         }
+        // 텐트 입구 마커 빌보드
+        if (tentDoorMark != null && tentDoorMark.activeSelf)
+        {
+            var tb = tentDoorMark.GetComponentInChildren<TextMesh>();
+            if (tb != null) tb.transform.rotation = cam.transform.rotation;
+        }
+        // 텐트 진입 / 난로 이송 상호작용 (위험 퀴즈보다 우선)
+        if (CampTentInteract()) { }
+        else if (CampHeaterCarry()) { }
         return true;
     }
 }

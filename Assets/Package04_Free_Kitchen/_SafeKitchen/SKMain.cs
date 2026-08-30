@@ -1840,8 +1840,10 @@ public partial class SKMain : MonoBehaviour
                 SKSound.Sfx("sfx_correct", 0.7f);
                 SKSound.Music("bgm_main", 0.3f);
                 // 수료 이력이 있으면 훈련 생략하고 바로 실전 (G로 재수강 가능)
-                bool tutDoneBefore = PlayerPrefs.GetInt("sktut", 0) == 1;
+                // 캠핑 교육 스테이지는 훈련 없이 바로 시작
+                bool tutDoneBefore = PlayerPrefs.GetInt("sktut", 0) == 1 || campMode;
                 if (!tutDone && !tutDoneBefore) TutStart();
+                else if (campMode) { tutDone = true; Say("캠핑장 곳곳의 위험 5곳을 찾아 고쳐 보자!", 5f); }
                 else { tutDone = true; Say("위험에 다가가 스페이스! 물음표를 따라가!", 4f); }
             }
             return;
@@ -2094,6 +2096,13 @@ public partial class SKMain : MonoBehaviour
         // 프롬프트 (지진 중엔 밸브 안내로 전환)
         bool showPrompt;
         string promptTxt = "[SPACE] 살펴보기";
+        if (campPrompt != null)   // 캠핑: 텐트 진입·난로 이송 안내 우선
+        {
+            pnPrompt.SetActive(true);
+            uiPrompt.text = campPrompt;
+            campPrompt = null;
+            return;
+        }
         if (quakeState == 1) showPrompt = false;
         else if (quakeState == 2)
         {

@@ -1865,8 +1865,8 @@ public partial class SKMain : MonoBehaviour
         // 궁극기 (배기통 레인저 — 가스 흡수)
         if (SKIn.Down(KeyCode.Q)) UltFire();
 
-        // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리
-        if (SKIn.Down(KeyCode.V)) ToggleFp();
+        // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리 (캠핑 교육 모드는 쿼터뷰 고정)
+        if (!campMode && SKIn.Down(KeyCode.V)) ToggleFp();
         FpUpdate();
 
         // 키 입력

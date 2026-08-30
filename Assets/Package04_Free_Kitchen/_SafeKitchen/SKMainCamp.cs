@@ -44,6 +44,7 @@ public partial class SKMain
         if (uiScore != null) uiScore.transform.parent.gameObject.SetActive(false);
         if (uiAcha != null) uiAcha.transform.parent.gameObject.SetActive(false);
         if (pnUlt != null) pnUlt.SetActive(false);   // 필살기도 교육 모드엔 비노출
+        if (fpHint != null) fpHint.gameObject.SetActive(false);   // 캠핑은 쿼터뷰 고정 — 안내 숨김
         // 위험 스폰 (시간 무제한) — camp_tent는 텐트 안에서 별도 등록
         foreach (var key in CAMP_KEYS)
         {
@@ -167,8 +168,8 @@ public partial class SKMain
         tentInterior.gameObject.SetActive(true);
         if (tentDoorMark != null) tentDoorMark.SetActive(false);
         // 플레이어·카메라 실내로
-        player.position = tentInterior.position + new Vector3(0, 0, 2.2f);
-        CampCamTo(tentInterior.position, 7.0f);
+        player.position = tentInterior.position + new Vector3(0, 0, 1.9f);
+        CampCamTo(tentInterior.position + new Vector3(0, 0, -0.3f), 12.5f);   // 방 전체가 화면에 (AC 구도)
         // 실내 위험(난로) 등록 — 기존 퀴즈 시스템 그대로 사용
         if (heaterHz == null && tentHeater != null)
         {
@@ -224,6 +225,27 @@ public partial class SKMain
                 }
             }
         }
+        // 경계선 위장: 맵 가장자리에 풀·바위를 흩뿌려 바닥 이음매를 가림
+#if UNITY_EDITOR
+        var deco = new List<GameObject>();
+        foreach (var k in new[]{ "Assets/Kenney/K_grass.glb", "Assets/Kenney/K_grass-large.glb",
+                                 "Assets/Kenney/K_patch-grass.glb", "Assets/Kenney/K_rock-a.glb" })
+        {
+            var p = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(k);
+            if (p != null) deco.Add(p);
+        }
+        if (deco.Count > 0)
+            for (int i = 0; i < 46; i++)
+            {
+                float a = (i / 46f) * Mathf.PI * 2f;
+                float rx = 10.6f + Random.Range(-0.9f, 1.6f), rz = 6.4f + Random.Range(-0.7f, 1.4f);
+                var pos = new Vector3(cx + Mathf.Cos(a) * rx, 0.02f, cz + Mathf.Sin(a) * rz);
+                var g = Instantiate(deco[Random.Range(0, deco.Count)], root);
+                g.transform.position = pos;
+                g.transform.rotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
+                g.transform.localScale = Vector3.one * Random.Range(1.6f, 2.8f);
+            }
+#endif
         // 안개: 원경이 하늘색으로 녹아 경계가 사라짐
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Linear;
@@ -704,11 +726,22 @@ public partial class SKMain
             campSkySet = true;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.60f, 0.82f, 0.95f);
-            // 외곽 마루(주방용 다크우드) → 짙은 숲 초록
+            // 외곽 마루 → 맵 바닥과 같은 잔디 텍스처(살짝 어둡게) — 경계 이음매 제거
             var of = GameObject.Find("outer_floor");
+            var floorGo = GameObject.Find("floor");
+            Material floorMat = floorGo != null ? floorGo.GetComponentInChildren<Renderer>().sharedMaterial : null;
             if (of != null)
                 foreach (var r in of.GetComponentsInChildren<Renderer>())
-                    if (r.material != null) r.material.color = new Color(0.24f, 0.42f, 0.26f);
+                {
+                    if (r.material == null) continue;
+                    if (floorMat != null && floorMat.mainTexture != null)
+                    {
+                        r.material.mainTexture = floorMat.mainTexture;
+                        r.material.mainTextureScale = new Vector2(30f, 30f);
+                        r.material.color = new Color(0.72f, 0.80f, 0.70f);   // 살짝 어둡게 → 원경 느낌
+                    }
+                    else r.material.color = new Color(0.42f, 0.60f, 0.42f);
+                }
             CampBuildForest();
         }
         if (videoOpen)

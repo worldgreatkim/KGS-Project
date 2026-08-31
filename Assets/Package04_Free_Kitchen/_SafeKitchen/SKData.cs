@@ -41,9 +41,11 @@ public static class SKData
     public const float BTS_CUT_UP = 0.45f;    // 캔 중심보다 이만큼 위를 겨눈다
     public const float BTS_CUT_DIST = 2.8f;   // 클로즈업 거리
     public const float BTS_CUT_PITCH = 20f;   // 낮은 각도로 올려다본다
-    public const float BTS_CUT_IRIS = 0.38f;  // 아이리스 조임/펼침 시간
-    public const float BTS_CUT_R = 0.34f;     // 조였을 때 원 반지름
-    public const float BTS_CUT_HOLD = 0.85f;  // 멈춰서 보여주는 시간
+    public const float BTS_CUT_HOLD = 2.6f;   // 클로즈업 상태로 1차 설명
+    public const float BTS_CUT_TELL = 3.2f;   // 조작 설명 시간
+    public const float RING_IN = 0.72f;       // 위험지대 고리 안지름
+    public const float RING_OUT = 0.92f;      // 바깥지름
+    public const float RING_UP = 0.22f;       // 조리대 상판(1.67) 위로 올려 묻히지 않게
     public const int   BTS_TRY = 400;        // 등장 지점 후보 표본 수
     public const float BTS_EDGE = 1.6f;      // 벽에서 띄울 여유
     public const float BTS_FAR_RATIO = 0.75f;// 가장 먼 거리의 이 비율 이상만 후보로

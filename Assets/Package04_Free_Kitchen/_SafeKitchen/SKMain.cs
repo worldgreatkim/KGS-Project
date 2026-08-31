@@ -1059,40 +1059,56 @@ public partial class SKMain : MonoBehaviour
         btsCamSaved = false;
     }
 
-    /// 부탄캔 등장 연출 — 조명을 낮추고 캔을 클로즈업한 뒤 아이리스로 조였다 편다.
-    /// IrisCo 는 완전 암전까지 가므로 쓰지 않고 IrisSet 을 직접 몰아준다.
+    /// 부탄캔 등장 연출 — 캔을 클로즈업해 레드레인저가 대처법을 설명하고, 시점을 되돌린 뒤
+    /// 위험지대(불붙은 화구)에 붉은 원을 남긴다. 아이리스는 쓰지 않는다.
     IEnumerator BtsIntroCo(Hz hz)
     {
         campCut = true;                     // 연출 동안 조작 잠금
         float sp = hz.speed; hz.speed = 0f; // 캔도 멈춰 세운다
         BtsCamTo(hz.node.transform.position + new Vector3(0f, SKData.BTS_CUT_UP, 0f),
                  SKData.BTS_CUT_DIST, SKData.BTS_CUT_PITCH);
-        DimLighting();
         SKSound.Sfx("sfx_blackout", 0.9f, 0.62f);   // 저음으로 눌러 '두둥' 느낌
-        IrisSet(1.06f);
-        if (irisImg != null) irisImg.gameObject.SetActive(true);
-        float t = 0f;
-        while (t < SKData.BTS_CUT_IRIS)
-        {
-            t += Time.deltaTime;
-            IrisSet(Mathf.Lerp(1.06f, SKData.BTS_CUT_R, Mathf.SmoothStep(0f, 1f, t / SKData.BTS_CUT_IRIS)));
-            yield return null;
-        }
-        IrisSet(SKData.BTS_CUT_R);
         StartCoroutine(Shake());
+        Say("저 부탄캔이 불붙은 화구로 다가가고 있다!", SKData.BTS_CUT_HOLD);
         yield return new WaitForSeconds(SKData.BTS_CUT_HOLD);
-        t = 0f;
-        while (t < SKData.BTS_CUT_IRIS)
-        {
-            t += Time.deltaTime;
-            IrisSet(Mathf.Lerp(SKData.BTS_CUT_R, 1.06f, Mathf.SmoothStep(0f, 1f, t / SKData.BTS_CUT_IRIS)));
-            yield return null;
-        }
-        if (irisImg != null) irisImg.gameObject.SetActive(false);
-        RestoreLighting();
-        BtsCamRestore();
+        Say("화구에 닿기 전에 캔에 다가가 [SPACE] 로 안전지대에 보내라!", SKData.BTS_CUT_TELL);
+        yield return new WaitForSeconds(SKData.BTS_CUT_TELL);
+        BtsCamRestore();                    // 시점 복귀
+        MakeDangerRing();                   // 위험지대를 붉은 원으로 표시
         hz.speed = sp;
         campCut = false;
+    }
+
+    GameObject dangerRing;
+
+    /// 불붙은 화구 둘레에 납작한 붉은 고리를 깐다 (절차 메시, 그림자 없음).
+    void MakeDangerRing()
+    {
+        if (dangerRing != null || flames[2] == null) return;
+        int N = 48;
+        float ri = SKData.RING_IN, ro = SKData.RING_OUT;
+        var vs = new List<Vector3>(); var ts = new List<int>();
+        for (int i = 0; i < N; i++)
+        {
+            float a0 = (i / (float)N) * Mathf.PI * 2f, a1 = ((i + 1) / (float)N) * Mathf.PI * 2f;
+            int b = vs.Count;
+            vs.Add(new Vector3(Mathf.Cos(a0) * ri, 0f, Mathf.Sin(a0) * ri));
+            vs.Add(new Vector3(Mathf.Cos(a0) * ro, 0f, Mathf.Sin(a0) * ro));
+            vs.Add(new Vector3(Mathf.Cos(a1) * ro, 0f, Mathf.Sin(a1) * ro));
+            vs.Add(new Vector3(Mathf.Cos(a1) * ri, 0f, Mathf.Sin(a1) * ri));
+            ts.Add(b); ts.Add(b + 1); ts.Add(b + 2);
+            ts.Add(b); ts.Add(b + 2); ts.Add(b + 3);
+        }
+        var mesh = new Mesh();
+        mesh.SetVertices(vs); mesh.SetTriangles(ts, 0);
+        mesh.RecalculateNormals(); mesh.RecalculateBounds();
+        dangerRing = new GameObject("danger_ring");
+        dangerRing.transform.position = flames[2].transform.position + new Vector3(0f, SKData.RING_UP, 0f);
+        dangerRing.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var mr = dangerRing.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = Flat(new Color(0.95f, 0.25f, 0.22f));
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = false;
     }
 
     void OpenChoice(Hz hz)
@@ -1330,6 +1346,7 @@ public partial class SKMain : MonoBehaviour
     /// 화면에 남은 부탄가스 소년단을 전부 치운다 (지진 직전 정리용).
     void ClearBts()
     {
+        if (TutActive) return;   // 훈련 중 연습용 캔은 지진이 나도 지우지 않는다
         for (int i = hazards.Count - 1; i >= 0; i--)
         {
             if (hazards[i].type != "bts") continue;
@@ -2376,8 +2393,8 @@ public partial class SKMain : MonoBehaviour
             { preQ1 = true; StartCoroutine(PreQuakeFx()); }
             if (quakeDone && !quake2Done && quakeState == 0 && !preQ2 && stageT >= 46.8f)
             { preQ2 = true; StartCoroutine(PreQuakeFx()); }
-            if (!quakeDone && quakeState == 0 && stageT >= 30f) StartQuake(1);
-            else if (quakeDone && !quake2Done && quakeState == 0 && stageT >= 48f) StartQuake(2);
+            if (!TutActive && !quakeDone && quakeState == 0 && stageT >= 30f) StartQuake(1);
+            else if (!TutActive && quakeDone && !quake2Done && quakeState == 0 && stageT >= 48f) StartQuake(2);
             if (quakeState >= 1 && quakeState <= 3)
             {
                 QuakeUpdate(dt);

@@ -37,6 +37,13 @@ public static class SKData
     public const float BTS_BRIEF_2 = 3.2f;   // 위험 설명 2단계
     public const float BTS_BRIEF_3 = 3.6f;   // 조작 안내 3단계
     public const float TUT_BTS_SLOW = 0.55f; // 튜토리얼 연습용 속도 배율
+    // --- 부탄캔 등장 연출 ---
+    public const float BTS_CUT_UP = 0.45f;    // 캔 중심보다 이만큼 위를 겨눈다
+    public const float BTS_CUT_DIST = 2.8f;   // 클로즈업 거리
+    public const float BTS_CUT_PITCH = 20f;   // 낮은 각도로 올려다본다
+    public const float BTS_CUT_IRIS = 0.38f;  // 아이리스 조임/펼침 시간
+    public const float BTS_CUT_R = 0.34f;     // 조였을 때 원 반지름
+    public const float BTS_CUT_HOLD = 0.85f;  // 멈춰서 보여주는 시간
     public const int   BTS_TRY = 400;        // 등장 지점 후보 표본 수
     public const float BTS_EDGE = 1.6f;      // 벽에서 띄울 여유
     public const float BTS_FAR_RATIO = 0.75f;// 가장 먼 거리의 이 비율 이상만 후보로

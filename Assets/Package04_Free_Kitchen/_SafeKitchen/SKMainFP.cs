@@ -122,7 +122,7 @@ public partial class SKMain
         hr.anchorMin = hr.anchorMax = new Vector2(1f, 0f);
         hr.pivot = new Vector2(1f, 0f);
         hr.anchoredPosition = new Vector2(-14, 10);
-        fpHint = Label(im.transform, "[V] 시점 전환", 15, new Color(1, 1, 1, 0.55f), TextAnchor.MiddleRight);
+        // 1인칭 시점 기능 제거 — 안내 라벨도 띄우지 않는다
         // 시야 밖 위험 화살표 풀
         for (int i = 0; i < 3; i++)
         {
@@ -144,7 +144,7 @@ public partial class SKMain
         BuildStationLabels();
         BuildOuterDeco();
         // 기본 시점: 확장맵(_FP 씬)=1인칭, 원본 씬=쿼터뷰 (V로 언제든 전환)
-        if (bigMap && PlayerPrefs.GetInt("skfp", 1) == 1) SetFp(true);
+        // 1인칭 자동 진입도 제거 (항상 쿼터뷰로 시작)
     }
 
     void ToggleFp() { SetFp(!fpMode); }

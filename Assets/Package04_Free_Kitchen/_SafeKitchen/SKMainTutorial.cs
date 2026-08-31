@@ -218,6 +218,7 @@ public partial class SKMain
             hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
             hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
             hazards.Add(hz);
+            StartCoroutine(BtsIntroCo(hz));   // 등장 연출은 튜토리얼에서 한 번만
         }
     }
 

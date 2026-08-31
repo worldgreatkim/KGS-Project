@@ -1039,6 +1039,62 @@ public partial class SKMain : MonoBehaviour
         hazards.Remove(hz);
     }
 
+    Vector3 btsCamPos; Quaternion btsCamRot; bool btsCamSaved;
+
+    /// 연출용 카메라 이동 — 캠핑용 CampCamTo 와 달리 배경·바닥 색을 건드리지 않는다.
+    void BtsCamTo(Vector3 center, float dist, float pitch)
+    {
+        if (cam == null) return;
+        if (!btsCamSaved) { btsCamPos = cam.transform.position; btsCamRot = cam.transform.rotation; btsCamSaved = true; }
+        float rad = pitch * Mathf.Deg2Rad;
+        cam.transform.position = center + new Vector3(0f, Mathf.Sin(rad), Mathf.Cos(rad)) * dist;
+        cam.transform.rotation = Quaternion.Euler(pitch, 180f, 0f);
+    }
+
+    void BtsCamRestore()
+    {
+        if (cam == null || !btsCamSaved) return;
+        cam.transform.position = btsCamPos;
+        cam.transform.rotation = btsCamRot;
+        btsCamSaved = false;
+    }
+
+    /// 부탄캔 등장 연출 — 조명을 낮추고 캔을 클로즈업한 뒤 아이리스로 조였다 편다.
+    /// IrisCo 는 완전 암전까지 가므로 쓰지 않고 IrisSet 을 직접 몰아준다.
+    IEnumerator BtsIntroCo(Hz hz)
+    {
+        campCut = true;                     // 연출 동안 조작 잠금
+        float sp = hz.speed; hz.speed = 0f; // 캔도 멈춰 세운다
+        BtsCamTo(hz.node.transform.position + new Vector3(0f, SKData.BTS_CUT_UP, 0f),
+                 SKData.BTS_CUT_DIST, SKData.BTS_CUT_PITCH);
+        DimLighting();
+        SKSound.Sfx("sfx_blackout", 0.9f, 0.62f);   // 저음으로 눌러 '두둥' 느낌
+        IrisSet(1.06f);
+        if (irisImg != null) irisImg.gameObject.SetActive(true);
+        float t = 0f;
+        while (t < SKData.BTS_CUT_IRIS)
+        {
+            t += Time.deltaTime;
+            IrisSet(Mathf.Lerp(1.06f, SKData.BTS_CUT_R, Mathf.SmoothStep(0f, 1f, t / SKData.BTS_CUT_IRIS)));
+            yield return null;
+        }
+        IrisSet(SKData.BTS_CUT_R);
+        StartCoroutine(Shake());
+        yield return new WaitForSeconds(SKData.BTS_CUT_HOLD);
+        t = 0f;
+        while (t < SKData.BTS_CUT_IRIS)
+        {
+            t += Time.deltaTime;
+            IrisSet(Mathf.Lerp(SKData.BTS_CUT_R, 1.06f, Mathf.SmoothStep(0f, 1f, t / SKData.BTS_CUT_IRIS)));
+            yield return null;
+        }
+        if (irisImg != null) irisImg.gameObject.SetActive(false);
+        RestoreLighting();
+        BtsCamRestore();
+        hz.speed = sp;
+        campCut = false;
+    }
+
     void OpenChoice(Hz hz)
     {
         openEv = hz;
@@ -2149,7 +2205,6 @@ public partial class SKMain : MonoBehaviour
         if (SKIn.Down(KeyCode.Q)) UltFire();
 
         // 1인칭 ↔ 쿼터뷰 전환 + FP 시점 처리 (캠핑 교육 모드는 쿼터뷰 고정)
-        if (!campMode && SKIn.Down(KeyCode.V)) ToggleFp();
         FpUpdate();
 
         // 키 입력

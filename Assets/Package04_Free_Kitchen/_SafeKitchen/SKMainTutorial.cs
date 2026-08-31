@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public partial class SKMain
 {
     // 게이트 종류
-    const int TG_NONE = 0, TG_MOVE = 1, TG_SPRINT = 2, TG_HAZARD = 3, TG_EXT = 4, TG_SPRAY = 5, TG_VALVE = 6;
+    const int TG_NONE = 0, TG_MOVE = 1, TG_SPRINT = 2, TG_HAZARD = 3, TG_EXT = 4, TG_SPRAY = 5, TG_VALVE = 6, TG_BTS = 7;
 
     static readonly string[] TUT_LINES = {
         "안녕! 가스안전 훈련소에 온 걸 환영해!\n나는 너를 가르칠 레드 레인저 교관이다!",
@@ -17,11 +17,12 @@ public partial class SKMain
         "잘했어! 주방 곳곳엔 위험이 숨어 있어.\n물음표에 다가가 [SPACE]를 누르고, 올바른 대처를 골라 봐!",
         "완벽해! 이번엔 소화기 훈련이다.\n구석의 소화기로 가서 [SPACE]로 들어 봐!",
         "훈련용 불꽃을 붙였다! 불 쪽을 바라보고\n[마우스 왼쪽]을 꾹 눌러 분사 — 좌우로 쓸면 더 빨리 꺼진다!",
-        "마지막 훈련! 가스 사고의 기본은 밸브 차단이다.\n가스밸브 앞에서 [SPACE] — 연타로 밸브를 잠가 봐!",
+        "다음 훈련! 가스 사고의 기본은 밸브 차단이다.\n가스밸브 앞에서 [SPACE] — 연타로 밸브를 잠가 봐!",
+        "마지막 훈련! 부탄캔은 불 근처에서 가열되면 터진다.\n불붙은 화구로 다가오는 캔을 쫓아가 [SPACE]로 붙잡아!",
         "축하한다, 기초 훈련 수료!\n이제 진짜 주방이다 — 위험을 찾아 해결하고 점수를 모아라!",
     };
     static readonly int[] TUT_GATES = {
-        TG_NONE, TG_NONE, TG_MOVE, TG_SPRINT, TG_HAZARD, TG_EXT, TG_SPRAY, TG_VALVE, TG_NONE,
+        TG_NONE, TG_NONE, TG_MOVE, TG_SPRINT, TG_HAZARD, TG_EXT, TG_SPRAY, TG_VALVE, TG_BTS, TG_NONE,
     };
 
     int tutStep = -1;            // -1=비활성
@@ -205,6 +206,19 @@ public partial class SKMain
         {
             if (valvePivot != null) MakeArrow(valvePivot.position + new Vector3(0, 0.55f, 0.2f));
         }
+        else if (gate == TG_BTS)
+        {
+            // 연습용 부탄캔 — 시간 제한 없이 천천히 다가온다
+            var def = SKData.EV["bts"];
+            var node = SpawnMarker(BtsSpawnPoint());
+            var bang = SpawnBang(node);
+            uid++;
+            var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
+            BtsSetup(hz);
+            hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
+            hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
+            hazards.Add(hz);
+        }
     }
 
     /// SPACE — 타자 중이면 즉시 완성, 대기 중이면 다음 스텝
@@ -294,12 +308,19 @@ public partial class SKMain
                 TutGateClear();
             }
         }
+        else if (gate == TG_BTS)
+        {
+            bool alive = false;
+            foreach (var h in hazards) if (h.type == "bts") alive = true;
+            if (!alive && !tutTyping) TutGateClear();
+        }
         // TG_VALVE: SPACE → 밸브 미니게임(MgStart)이 담당, 성공 시 MgFinish가 TutGateClear 호출
     }
 
     /// 수료(false=정상 완주) 또는 F1 스킵(true)
     void TutFinish(bool skipped)
     {
+        ClearBts();   // F1 로 건너뛰어도 연습용 캔이 남지 않게
         if (pnUlt != null) pnUlt.SetActive(true);   // 훈련 끝 — 게이지 복귀
         // 잔여 연습 요소 정리
         foreach (var hz in hazards) Destroy(hz.node);

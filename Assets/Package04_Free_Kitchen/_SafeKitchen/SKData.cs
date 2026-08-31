@@ -36,6 +36,7 @@ public static class SKData
     public const float BTS_BRIEF_1 = 2.2f;   // 등장 안내 1단계
     public const float BTS_BRIEF_2 = 3.2f;   // 위험 설명 2단계
     public const float BTS_BRIEF_3 = 3.6f;   // 조작 안내 3단계
+    public const float TUT_BTS_SLOW = 0.55f; // 튜토리얼 연습용 속도 배율
     public const int   BTS_TRY = 400;        // 등장 지점 후보 표본 수
     public const float BTS_EDGE = 1.6f;      // 벽에서 띄울 여유
     public const float BTS_FAR_RATIO = 0.75f;// 가장 먼 거리의 이 비율 이상만 후보로

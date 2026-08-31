@@ -32,6 +32,10 @@ public static class SKData
     public const float BTS_HOP_FREQ = 8.0f;  // 점프 주기 (rad/s, 약 2.5회/초)
     public const float BTS_HOP_H = 0.11f;    // 점프 높이(m)
     public const float BTS_SQUASH = 0.12f;   // 착지 눌림 비율
+    public const float DANGER_LABEL_Y = 0.95f;  // '위험지대' 라벨 높이
+    public const float BTS_BRIEF_1 = 2.2f;   // 등장 안내 1단계
+    public const float BTS_BRIEF_2 = 3.2f;   // 위험 설명 2단계
+    public const float BTS_BRIEF_3 = 3.6f;   // 조작 안내 3단계
     public const int   BTS_TRY = 400;        // 등장 지점 후보 표본 수
     public const float BTS_EDGE = 1.6f;      // 벽에서 띄울 여유
     public const float BTS_FAR_RATIO = 0.75f;// 가장 먼 거리의 이 비율 이상만 후보로

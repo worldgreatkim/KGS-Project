@@ -235,6 +235,10 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // '위험지대' 표시는 실제 불꽃 위치를 따라간다 (스토브 트랜스폼 원점은 화구와 어긋나 있다)
+        if (flames[2] != null)
+            MakeStLabel("위험지대", new Color(0.95f, 0.35f, 0.32f), flames[2].transform,
+                        new Vector3(0f, SKData.DANGER_LABEL_Y, 0f), null);
         // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
         var btsTpl = FindKitchenChild("BTS_Template");
         if (btsTpl != null) btsTpl.gameObject.SetActive(false);
@@ -953,6 +957,7 @@ public partial class SKMain : MonoBehaviour
     /// 훈련 종료 직후 부탄가스 소년단을 한 번 등장시킨다.
     void StartBtsFinale()
     {
+        if (quakeState != 0 && quakeState != 4) return;   // 지진 중에는 등장시키지 않는다
         btsFinaleOn = true;
         var def = SKData.EV["bts"];
         var node = SpawnMarker(BtsSpawnPoint());
@@ -962,7 +967,17 @@ public partial class SKMain : MonoBehaviour
         BtsSetup(hz);   // 목표·속도·모델을 붙이고 도달 시간을 ttl 로 잡는다
         hazards.Add(hz);
         SKSound.Sfx("sfx_acha");
-        Say("부탄가스 소년단이 나타났다! 화구에 닿기 전에 막아!", 3.5f);
+        StartCoroutine(BtsBriefCo());
+    }
+
+    /// 등장 직후 무엇을 해야 하는지 순서대로 알려준다.
+    IEnumerator BtsBriefCo()
+    {
+        Say("부탄가스 소년단이 나타났다!", SKData.BTS_BRIEF_1);
+        yield return new WaitForSeconds(SKData.BTS_BRIEF_1);
+        Say("불이 켜진 화구로 다가가고 있어 — 캔이 가열되면 터진다!", SKData.BTS_BRIEF_2);
+        yield return new WaitForSeconds(SKData.BTS_BRIEF_2);
+        Say("가까이 가서 [SPACE] 로 붙잡아 안전지대에 옮기자!", SKData.BTS_BRIEF_3);
     }
 
     /// 화구에서 멀고 · 카메라에 보이고 · 직선 경로가 뚫린 지점을 무작위로 고른다.
@@ -1232,8 +1247,22 @@ public partial class SKMain : MonoBehaviour
     }
 
     // ---------- 지진 시퀀스 (1차=화재, 2차=가스누출) ----------
+    /// 화면에 남은 부탄가스 소년단을 전부 치운다 (지진 직전 정리용).
+    void ClearBts()
+    {
+        for (int i = hazards.Count - 1; i >= 0; i--)
+        {
+            if (hazards[i].type != "bts") continue;
+            if (openEv == hazards[i]) CloseChoice();
+            Destroy(hazards[i].node);
+            hazards.RemoveAt(i);
+        }
+        btsFinaleOn = false;
+    }
+
     void StartQuake(int scen)
     {
+        ClearBts();   // 지진 전에 화면을 깨끗이 비운다
         quakeScen = scen;
         quakeState = 1;
         quakeT = 0;
@@ -1901,6 +1930,10 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // '위험지대' 표시는 실제 불꽃 위치를 따라간다 (스토브 트랜스폼 원점은 화구와 어긋나 있다)
+        if (flames[2] != null)
+            MakeStLabel("위험지대", new Color(0.95f, 0.35f, 0.32f), flames[2].transform,
+                        new Vector3(0f, SKData.DANGER_LABEL_Y, 0f), null);
         // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
         var btsTpl = FindKitchenChild("BTS_Template");
         if (btsTpl != null) btsTpl.gameObject.SetActive(false);
@@ -1994,6 +2027,10 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // '위험지대' 표시는 실제 불꽃 위치를 따라간다 (스토브 트랜스폼 원점은 화구와 어긋나 있다)
+        if (flames[2] != null)
+            MakeStLabel("위험지대", new Color(0.95f, 0.35f, 0.32f), flames[2].transform,
+                        new Vector3(0f, SKData.DANGER_LABEL_Y, 0f), null);
         // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
         var btsTpl = FindKitchenChild("BTS_Template");
         if (btsTpl != null) btsTpl.gameObject.SetActive(false);

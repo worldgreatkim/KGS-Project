@@ -233,7 +233,7 @@ public partial class SKMain : MonoBehaviour
         BuildFlame(1, new Vector3(HzPos("yellow").x + (modKit ? 0.39f : 0f), flameY, modKit ? HzPos("yellow").z : 1.9f));
         SetFlame(0, false);
         SetFlame(1, false);
-        BuildCampFire();
+        BuildStoveFlame();
         BuildTitle();
         BuildTutUI();
         BuildMgUI();
@@ -469,25 +469,48 @@ public partial class SKMain : MonoBehaviour
     }
 
     /// 불꽃 상태 전환: false=파랑(정상) true=노랑(불완전연소)
-    /// 방 한가운데 모닥불(CampFire)에 상시 불꽃을 올린다. 오브젝트가 없으면 아무것도 하지 않는다.
-    void BuildCampFire()
+    /// 앞줄 우측 화구에 파란 가스 불꽃을 올린다. 가스밸브를 잠그면 꺼지고 열면 다시 붙는다.
+    void BuildStoveFlame()
     {
-        if (GameObject.Find("CampFireFx") != null) return;   // Cartoon FX 불꽃이 있으면 절차 불꽃은 만들지 않는다
-        var cf = GameObject.Find("CampFire");
-        if (cf == null) return;
-        var rs = cf.GetComponentsInChildren<Renderer>(true);
-        if (rs.Length == 0) return;
-        var b = rs[0].bounds;
-        foreach (var r in rs) b.Encapsulate(r.bounds);
-        BuildFlame(2, new Vector3(b.center.x, b.max.y - SKData.FIRE_SINK, b.center.z));
-        SetFlame(2, true);   // 장작불이라 주황색 + 연기
-        // 화구보다 큰 불이라 입자와 빛을 키운다
+        if (!IsModKit()) return;
+        BuildFlame(2, SKData.STOVE_FLAME_MOD);
+        SetFlame(2, false);   // 파란 불꽃 = 정상 연소
         var mn = flames[2].main;
-        mn.startSize = new ParticleSystem.MinMaxCurve(SKData.FIRE_SIZE_MIN, SKData.FIRE_SIZE_MAX);
-        mn.startLifetime = SKData.FIRE_LIFE;
-        var em = flames[2].emission; em.rateOverTime = SKData.FIRE_RATE;
-        var sh = flames[2].shape; sh.radius = SKData.FIRE_RADIUS;
-        if (flameLights[2] != null) { flameLights[2].range = SKData.FIRE_LIGHT_RANGE; flameLights[2].intensity = SKData.FIRE_LIGHT_INTENSITY; }
+        mn.startSize = new ParticleSystem.MinMaxCurve(SKData.STOVE_FLAME_SIZE_MIN, SKData.STOVE_FLAME_SIZE_MAX);
+        var em = flames[2].emission; em.rateOverTime = SKData.STOVE_FLAME_RATE;
+        var sh = flames[2].shape; sh.radius = SKData.STOVE_FLAME_RADIUS;
+        stoveFlameLit = true;
+        if (flameLights[2] != null) stoveLight0 = flameLights[2].intensity;
+    }
+
+    bool stoveFlameLit;
+    float stoveLight0 = 1f;
+    Coroutine stoveFlameCo;
+
+    /// 화구 불꽃 점화/소화. 입자는 방출만 멈춰 남은 불꽃이 자연스럽게 사그라들게 둔다.
+    void SetStoveFlame(bool on)
+    {
+        if (flames[2] == null || stoveFlameLit == on) return;
+        stoveFlameLit = on;
+        if (on) flames[2].Play();
+        else flames[2].Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        if (stoveFlameCo != null) StopCoroutine(stoveFlameCo);
+        stoveFlameCo = StartCoroutine(StoveLightCo(on));
+    }
+
+    IEnumerator StoveLightCo(bool on)
+    {
+        var l = flameLights[2];
+        if (l == null) yield break;
+        float from = l.intensity, to = on ? stoveLight0 : 0f, t = 0f;
+        while (t < SKData.STOVE_FLAME_FADE)
+        {
+            t += Time.deltaTime;
+            l.intensity = Mathf.Lerp(from, to, t / SKData.STOVE_FLAME_FADE);
+            yield return null;
+        }
+        l.intensity = to;
+        l.enabled = on;
     }
 
     void SetFlame(int idx, bool yellow)
@@ -1778,7 +1801,7 @@ public partial class SKMain : MonoBehaviour
         }
         SetFlame(0, false);
         SetFlame(1, false);
-        BuildCampFire();
+        BuildStoveFlame();
         if (boilFoam != null) boilFoam.gameObject.SetActive(true);
         var steamGo = GameObject.Find("steam");
         if (steamGo != null) { var se = steamGo.GetComponent<ParticleSystem>().emission; se.enabled = true; }
@@ -1807,6 +1830,7 @@ public partial class SKMain : MonoBehaviour
             yield return null;
         }
         valvePivot.localEulerAngles = new Vector3(0, to, 0);
+        SetStoveFlame(to < 45f);   // 잠그면(90°) 꺼지고 열면(0°) 다시 붙는다
     }
 
     IEnumerator Shake()
@@ -1866,7 +1890,7 @@ public partial class SKMain : MonoBehaviour
         if (steamGo != null) { var se = steamGo.GetComponent<ParticleSystem>().emission; se.enabled = true; }
         SetFlame(0, false);
         SetFlame(1, false);
-        BuildCampFire();
+        BuildStoveFlame();
         if (valvePivot != null) valvePivot.localEulerAngles = Vector3.zero;
         Say("다시 시작! 위험에 다가가 스페이스!", 3f);
     }

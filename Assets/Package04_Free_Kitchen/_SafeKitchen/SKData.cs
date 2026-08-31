@@ -29,16 +29,14 @@ public static class SKData
     public const float FAN_SPIN = 400f;     // 벽 환풍기 로터 회전 속도(도/초)
     public const float BTS_SPEED = 0.42f;   // 부탄가스 소년단 접근 속도(m/s)
     public static bool BTS_HOP = true;      // true=통통 점프(트랜스폼), false=FBX 걷기 애니메이션
-    // --- 중앙 모닥불 불꽃 ---
-    public const float FIRE_SINK = 0.10f;            // 장작 윗면에서 살짝 내려 잡는 값
-    public const float FIRE_SIZE_MIN = 0.16f;
-    public const float FIRE_SIZE_MAX = 0.34f;
-    public const float FIRE_LIFE = 0.55f;
-    public const float FIRE_RATE = 190f;
-    public const float FIRE_RADIUS = 0.34f;
-    public const float FIRE_LIGHT_RANGE = 5.5f;
-    public const float FIRE_LIGHT_INTENSITY = 2.4f;
-    public static readonly Vector3 BTS_GOAL_MOD = new Vector3(14.10f, 0f, 8.18f);   // 중앙 모닥불 앞 도달 지점
+    // --- 앞줄 우측 화구의 파란 불꽃 (가스밸브와 연동) ---
+    public static readonly Vector3 STOVE_FLAME_MOD = new Vector3(18.05f, 1.71f, 12.11f);
+    public const float STOVE_FLAME_SIZE_MIN = 0.10f;
+    public const float STOVE_FLAME_SIZE_MAX = 0.24f;
+    public const float STOVE_FLAME_RATE = 150f;
+    public const float STOVE_FLAME_RADIUS = 0.16f;
+    public const float STOVE_FLAME_FADE = 0.35f;   // 밸브 조작 시 빛이 사그라드는 시간
+    public static readonly Vector3 BTS_GOAL_MOD = new Vector3(18.50f, 0f, 10.35f);  // 앞줄 우측 화구 앞 도달 지점
     public const int COMBO_MAX = 4;
     public const int BASE_PTS = 100;
     public const int RETRY_PTS = 40;
@@ -73,7 +71,7 @@ public static class SKData
         {"hose",   new Vector3(17.4f, 1.5f,  1.2f)},
         {"butane", new Vector3(17.3f, 1.5f,  11.42f)},
         {"kid",    new Vector3(10.5f, 0.0f,  9.6f)},
-        {"bts",    new Vector3(16.90f, 0.0f, 10.40f)},   // 등장 위치 (앞줄 통로 → 중앙 모닥불로 접근)
+        {"bts",    new Vector3(21.80f, 0.0f, 10.40f)},   // 등장 위치 (통로 우측 → 앞줄 우측 화구로 접근)
     };
 
     // ---- 위험 위치 (원본 맵 19.2×10.8 — SafeKitchen3D.unity 쿼터뷰 씬용) ----

@@ -31,13 +31,13 @@ public static class SKData
     public static bool BTS_HOP = true;      // true=통통 점프(트랜스폼), false=FBX 걷기 애니메이션
     public const float FLAME_UNDER = 0.07f;   // 조리기구 밑면에서 불꽃을 이만큼 내려 잡는다
     // --- 앞줄 우측 화구의 파란 불꽃 (가스밸브와 연동) ---
-    public static readonly Vector3 STOVE_FLAME_MOD = new Vector3(18.05f, 1.71f, 12.11f);
+    public static readonly Vector3 STOVE_FLAME_MOD = new Vector3( 7.04f, 1.71f, 12.04f);
     public const float STOVE_FLAME_SIZE_MIN = 0.10f;
     public const float STOVE_FLAME_SIZE_MAX = 0.24f;
     public const float STOVE_FLAME_RATE = 150f;
     public const float STOVE_FLAME_RADIUS = 0.16f;
     public const float STOVE_FLAME_FADE = 0.35f;   // 밸브 조작 시 빛이 사그라드는 시간
-    public static readonly Vector3 BTS_GOAL_MOD = new Vector3(18.50f, 0f, 10.35f);  // 앞줄 우측 화구 앞 도달 지점
+    public static readonly Vector3 BTS_GOAL_MOD = new Vector3( 7.04f, 0f, 10.35f);  // 앞줄 좌측 화구 앞 도달 지점
     public const int COMBO_MAX = 4;
     public const int BASE_PTS = 100;
     public const int RETRY_PTS = 40;
@@ -72,7 +72,7 @@ public static class SKData
         {"hose",   new Vector3(17.4f, 1.5f,  1.2f)},
         {"butane", new Vector3(17.3f, 1.5f,  11.42f)},
         {"kid",    new Vector3(10.5f, 0.0f,  9.6f)},
-        {"bts",    new Vector3(21.80f, 0.0f, 10.40f)},   // 등장 위치 (통로 우측 → 앞줄 우측 화구로 접근)
+        {"bts",    new Vector3( 3.60f, 0.0f, 10.40f)},   // 등장 위치 (통로 좌측 → 앞줄 좌측 화구로 접근)
     };
 
     // ---- 위험 위치 (원본 맵 19.2×10.8 — SafeKitchen3D.unity 쿼터뷰 씬용) ----

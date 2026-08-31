@@ -974,10 +974,12 @@ public partial class SKMain : MonoBehaviour
     IEnumerator BtsBriefCo()
     {
         Say("부탄가스 소년단이 나타났다!", SKData.BTS_BRIEF_1);
+        SKSound.Vo("vo_bts_warn");
         yield return new WaitForSeconds(SKData.BTS_BRIEF_1);
         Say("불이 켜진 화구로 다가가고 있어 — 캔이 가열되면 터진다!", SKData.BTS_BRIEF_2);
         yield return new WaitForSeconds(SKData.BTS_BRIEF_2);
         Say("가까이 가서 [SPACE] 로 붙잡아 안전지대에 옮기자!", SKData.BTS_BRIEF_3);
+        SKSound.Vo("vo_bts_move");
     }
 
     /// 화구에서 멀고 · 카메라에 보이고 · 직선 경로가 뚫린 지점을 무작위로 고른다.
@@ -1013,6 +1015,28 @@ public partial class SKMain : MonoBehaviour
         for (int i = 1; i < n; i++)
             if (Blocked(Vector3.Lerp(a, b, i / (float)n))) return false;
         return true;
+    }
+
+    /// 부탄캔은 선택지를 띄우지 않고 SPACE 한 번으로 붙잡아 안전지대로 던진다.
+    /// 다가오는 표적을 쫓아가 잡는 행동 자체가 학습이라 퀴즈를 끼우면 흐름이 끊긴다.
+    void BtsGrab(Hz hz)
+    {
+        FlyBtsToSafeZone(hz);
+        int pts = SKData.BASE_PTS;
+        combo = comboT > 0f ? combo + 1 : 1;
+        comboT = SKData.COMBO_WINDOW;
+        pts *= Mathf.Min(combo, SKData.COMBO_MAX);
+        score += pts;
+        AddFloat(hz.node.transform.position, "+" + pts);
+        SKSound.Sfx("sfx_correct", 1f, Mathf.Min(1.35f, 1f + 0.06f * Mathf.Min(combo, 6)));
+        SKSound.Vo("vo_bts_done");
+        PunchZoom();
+        FxCorrect();
+        BadgeProgress();
+        UltCharge();
+        Say(hz.def.toast, 3f);
+        StartCoroutine(Pop(hz.node));
+        hazards.Remove(hz);
     }
 
     void OpenChoice(Hz hz)
@@ -2146,7 +2170,8 @@ public partial class SKMain : MonoBehaviour
             {
                 var hz = Nearest();
                 bool drill = !spraying && TutGate == TG_SPRAY && carryExt != null && NearBurningFire() >= 0;
-                if (hz != null) OpenChoice(hz);
+                if (hz != null && hz.type == "bts") BtsGrab(hz);   // 부탄캔은 퀴즈 없이 바로 옮긴다
+                else if (hz != null) OpenChoice(hz);
                 else if (drill) SprayBurst();   // 훈련: SPACE로도 분사
                 else TryToggleExtinguisher();
             }

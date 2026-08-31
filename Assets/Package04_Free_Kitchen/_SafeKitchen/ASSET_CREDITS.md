@@ -92,3 +92,10 @@
   - Mod_BTS2 50,002tri / 34.6MB → **22,500tri / 2.51MB**, 걷기 클립 `preset:biped:walk`(2.33초, 채널 55) 보존
 - 디자인 방향: 참고 이미지를 그대로 차용하지 않고 프로젝트 팔레트·소프트 매트 3D 톤으로 재해석
 - 생성 프롬프트: Soft matte 3D render, pastel game-asset style, isolated on pure white. A cute but MENACING anthropomorphic BUTANE GAS CAN character. Body: warm red-orange (#E2564A) canister with cream (#F5EDD5) band and silver-grey (#C8CCD4) shoulder with red nozzle cap. Face: black wraparound sunglasses, angry slant, frowning mouth. Limbs clearly SEPARATED from the torso with visible empty space. Full body, centered, pure white background, no shadow, single character only.
+
+## CFXR Fire (Cartoon FX Remaster) — 중앙 모닥불 불꽃 — 2026-09-01 06:42
+- 파일: `Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Fire/CFXR Fire.prefab`
+- 출처: Unity Asset Store — Cartoon FX Remaster (Jean Moreno)
+- 라이선스: Unity Asset Store 표준 EULA (구매 계정 프로젝트 내 사용 허용)
+- 씬 배치: `CampFireFx` (13.09, 0.65, 8.18) 스케일 1.6
+- 조정: Smoke size 2.0~4.0 → 0.45~0.85 / rate 10 → 4, 불꽃 size → 0.20~0.95 rate 18, Ember rate 7, Point Light range 10 → 4.6 intensity → 1.5

@@ -235,6 +235,9 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
+        var btsTpl = FindKitchenChild("BTS_Template");
+        if (btsTpl != null) btsTpl.gameObject.SetActive(false);
         BuildTitle();
         BuildTutUI();
         BuildMgUI();
@@ -1845,6 +1848,9 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
+        var btsTpl = FindKitchenChild("BTS_Template");
+        if (btsTpl != null) btsTpl.gameObject.SetActive(false);
         if (boilFoam != null) boilFoam.gameObject.SetActive(true);
         var steamGo = GameObject.Find("steam");
         if (steamGo != null) { var se = steamGo.GetComponent<ParticleSystem>().emission; se.enabled = true; }
@@ -1935,6 +1941,9 @@ public partial class SKMain : MonoBehaviour
         SetFlame(1, false);
         BuildStoveFlame();
         SnapFlamesToCookware();
+        // BTS 템플릿은 크기 조정을 눈으로 하라고 씬에 켜둘 수 있다 — 편집용으로 켜둬도 게임에선 숨긴다
+        var btsTpl = FindKitchenChild("BTS_Template");
+        if (btsTpl != null) btsTpl.gameObject.SetActive(false);
         if (valvePivot != null) valvePivot.localEulerAngles = Vector3.zero;
         Say("다시 시작! 위험에 다가가 스페이스!", 3f);
     }

@@ -27,8 +27,15 @@ public static class SKData
     public const float DEMO_DUR = 60f;      // 데모 길이
     public const float COMBO_WINDOW = 4f;   // 콤보 유지 시간
     public const float FAN_SPIN = 400f;     // 벽 환풍기 로터 회전 속도(도/초)
-    public const float BTS_SPEED = 0.42f;   // 부탄가스 소년단 접근 속도(m/s)
+    public const float BTS_SPEED = 1.05f;   // 부탄가스 소년단 접근 속도(m/s)
     public static bool BTS_HOP = true;      // true=통통 점프(트랜스폼), false=FBX 걷기 애니메이션
+    public const float BTS_HOP_FREQ = 8.0f;  // 점프 주기 (rad/s, 약 2.5회/초)
+    public const float BTS_HOP_H = 0.11f;    // 점프 높이(m)
+    public const float BTS_SQUASH = 0.12f;   // 착지 눌림 비율
+    public const int   BTS_TRY = 400;        // 등장 지점 후보 표본 수
+    public const float BTS_EDGE = 1.6f;      // 벽에서 띄울 여유
+    public const float BTS_FAR_RATIO = 0.75f;// 가장 먼 거리의 이 비율 이상만 후보로
+    public const float BTS_PATH_STEP = 0.4f; // 직선 경로 검사 간격
     public const float FLAME_UNDER = 0.07f;   // 조리기구 밑면에서 불꽃을 이만큼 내려 잡는다
     // --- 앞줄 우측 화구의 파란 불꽃 (가스밸브와 연동) ---
     public static readonly Vector3 STOVE_FLAME_MOD = new Vector3( 7.04f, 1.71f, 12.04f);

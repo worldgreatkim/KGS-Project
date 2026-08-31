@@ -873,6 +873,7 @@ public partial class SKMain : MonoBehaviour
         {
             bool active = false;
             foreach (var hz in hazards) if (hz.type == k) active = true;
+            if (k == "bts") continue;   // BTS 는 훈련 끝난 뒤 마무리 단계로만 등장
             if (!active && SKData.HZ.ContainsKey(k)) cand.Add(k);
         }
         if (cand.Count == 0) return;
@@ -940,11 +941,63 @@ public partial class SKMain : MonoBehaviour
             hz.walker.rotation = Quaternion.Slerp(hz.walker.rotation, Quaternion.LookRotation(dir), 6f * dt);
         // 다리가 보이는 캐릭터라 미끄러지면 어색하다 — 초당 약 1.8회로 뛰어서 접근한다
         if (hz.useAnim) { hz.walker.localPosition = Vector3.zero; hz.walker.localScale = hz.baseScale; return; }
-        float h = Mathf.Abs(Mathf.Sin(timeAll * 5.6f + hz.id));
-        hz.walker.localPosition = new Vector3(0f, h * 0.11f, 0f);
+        float h = Mathf.Abs(Mathf.Sin(timeAll * SKData.BTS_HOP_FREQ + hz.id));
+        hz.walker.localPosition = new Vector3(0f, h * SKData.BTS_HOP_H, 0f);
         // 착지 순간(h≈0) 세로로 눌리고 가로로 퍼진다
-        float sq = 1f - (1f - h) * 0.12f;
+        float sq = 1f - (1f - h) * SKData.BTS_SQUASH;
         hz.walker.localScale = new Vector3(hz.baseScale.x / sq, hz.baseScale.y * sq, hz.baseScale.z / sq);
+    }
+
+    bool btsFinaleOn, btsFinaleDone;
+
+    /// 훈련 종료 직후 부탄가스 소년단을 한 번 등장시킨다.
+    void StartBtsFinale()
+    {
+        btsFinaleOn = true;
+        var def = SKData.EV["bts"];
+        var node = SpawnMarker(BtsSpawnPoint());
+        var bang = SpawnBang(node);
+        uid++;
+        var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
+        BtsSetup(hz);   // 목표·속도·모델을 붙이고 도달 시간을 ttl 로 잡는다
+        hazards.Add(hz);
+        SKSound.Sfx("sfx_acha");
+        Say("부탄가스 소년단이 나타났다! 화구에 닿기 전에 막아!", 3.5f);
+    }
+
+    /// 화구에서 멀고 · 카메라에 보이고 · 직선 경로가 뚫린 지점을 무작위로 고른다.
+    Vector3 BtsSpawnPoint()
+    {
+        var goal = SKData.BTS_GOAL_MOD;
+        var ok = new List<Vector3>();
+        float far = 0f;
+        for (int i = 0; i < SKData.BTS_TRY; i++)
+        {
+            var p = new Vector3(Random.Range(SKData.BTS_EDGE, SKData.RW - SKData.BTS_EDGE), 0f,
+                                Random.Range(SKData.BTS_EDGE, SKData.RD - SKData.BTS_EDGE));
+            if (Blocked(p)) continue;
+            var v = cam.WorldToViewportPoint(p + new Vector3(0f, 0.5f, 0f));
+            if (v.z <= 0f || v.x < 0.07f || v.x > 0.93f || v.y < 0.10f || v.y > 0.90f) continue;
+            if (!BtsPathClear(p, goal)) continue;
+            float dd = Vector3.Distance(p, goal);
+            if (dd > far) far = dd;
+            ok.Add(p);
+        }
+        if (ok.Count == 0) return SKData.HZ_MOD["bts"];   // 못 찾으면 고정 지점으로
+        var pick = new List<Vector3>();
+        foreach (var p in ok)
+            if (Vector3.Distance(p, goal) > far * SKData.BTS_FAR_RATIO) pick.Add(p);
+        var src = pick.Count > 0 ? pick : ok;
+        return src[Random.Range(0, src.Count)];
+    }
+
+    /// 두 점을 잇는 직선이 콜라이더에 걸리지 않는지 (BTS 는 길찾기를 하지 않는다)
+    bool BtsPathClear(Vector3 a, Vector3 b)
+    {
+        int n = Mathf.CeilToInt(Vector3.Distance(a, b) / SKData.BTS_PATH_STEP);
+        for (int i = 1; i < n; i++)
+            if (Blocked(Vector3.Lerp(a, b, i / (float)n))) return false;
+        return true;
     }
 
     void OpenChoice(Hz hz)
@@ -2216,8 +2269,13 @@ public partial class SKMain : MonoBehaviour
             stageT += dt;
             if (stageT > SKData.DEMO_DUR)
             {
-                over = true;
-                ShowRank();
+                // 훈련이 끝나면 부탄가스 소년단이 마무리로 등장한다. 처리되면 그때 랭크로 넘어간다
+                if (!btsFinaleOn && !btsFinaleDone) StartBtsFinale();
+                else if (!btsFinaleOn)
+                {
+                    over = true;
+                    ShowRank();
+                }
             }
             spawnT -= dt;
             if (spawnT <= 0f) { TrySpawn(); spawnT = 4f + Random.value * 2f; }
@@ -2244,6 +2302,14 @@ public partial class SKMain : MonoBehaviour
                     Destroy(hz.node);
                     hazards.RemoveAt(i);
                 }
+            }
+            if (btsFinaleOn)
+            {
+                bool alive = false;
+                foreach (var h in hazards) if (h.type == "bts") alive = true;
+                if (!alive) { btsFinaleOn = false; btsFinaleDone = true; }
+            }
+            {
             }
             }
             }

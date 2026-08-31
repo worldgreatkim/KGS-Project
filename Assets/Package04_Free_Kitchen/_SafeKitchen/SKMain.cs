@@ -234,6 +234,7 @@ public partial class SKMain : MonoBehaviour
         SetFlame(0, false);
         SetFlame(1, false);
         BuildStoveFlame();
+        SnapFlamesToCookware();
         BuildTitle();
         BuildTutUI();
         BuildMgUI();
@@ -511,6 +512,47 @@ public partial class SKMain : MonoBehaviour
         }
         l.intensity = to;
         l.enabled = on;
+    }
+
+    /// 불꽃을 화구 위에 올려진 냄비·팬 밑으로 옮긴다.
+    /// 조리기구를 씬에서 옮겨도 불꽃이 따라오도록 좌표를 하드코딩하지 않는다.
+    void SnapFlamesToCookware()
+    {
+        // 1) 화구 목록
+        var burners = new List<Bounds>();
+        foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            if (r != null && r.name == "top_burner") burners.Add(r.bounds);
+        if (burners.Count == 0) return;
+        // 2) 화구 위에 올라가 있는 조리기구만 추린다 (장식용 그릇은 제외된다)
+        var ware = new List<Bounds>();
+        foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+        {
+            if (r == null) continue;
+            string n = r.name;
+            if (!(n.Contains("Pot") || n.Contains("Pan") || n.Contains("Kettle"))) continue;
+            var wb = r.bounds;
+            foreach (var bu in burners)
+                if (wb.center.x > bu.min.x && wb.center.x < bu.max.x
+                 && wb.center.z > bu.min.z && wb.center.z < bu.max.z) { ware.Add(wb); break; }
+        }
+        if (ware.Count == 0) return;
+        // 3) 각 불꽃을 가장 가까운 조리기구 밑으로
+        for (int i = 0; i < flames.Length; i++)
+        {
+            if (flames[i] == null) continue;
+            var p = flames[i].transform.position;
+            Bounds best = ware[0]; float bd = float.MaxValue;
+            foreach (var w in ware)
+            {
+                float dd = new Vector2(w.center.x - p.x, w.center.z - p.z).sqrMagnitude;
+                if (dd < bd) { bd = dd; best = w; }
+            }
+            var to = new Vector3(best.center.x, best.min.y - SKData.FLAME_UNDER, best.center.z);
+            var delta = to - p;
+            flames[i].transform.position += delta;
+            if (flameSmoke[i] != null) flameSmoke[i].transform.position += delta;
+            if (flameLights[i] != null) flameLights[i].transform.position += delta;
+        }
     }
 
     void SetFlame(int idx, bool yellow)
@@ -1802,6 +1844,7 @@ public partial class SKMain : MonoBehaviour
         SetFlame(0, false);
         SetFlame(1, false);
         BuildStoveFlame();
+        SnapFlamesToCookware();
         if (boilFoam != null) boilFoam.gameObject.SetActive(true);
         var steamGo = GameObject.Find("steam");
         if (steamGo != null) { var se = steamGo.GetComponent<ParticleSystem>().emission; se.enabled = true; }
@@ -1891,6 +1934,7 @@ public partial class SKMain : MonoBehaviour
         SetFlame(0, false);
         SetFlame(1, false);
         BuildStoveFlame();
+        SnapFlamesToCookware();
         if (valvePivot != null) valvePivot.localEulerAngles = Vector3.zero;
         Say("다시 시작! 위험에 다가가 스페이스!", 3f);
     }

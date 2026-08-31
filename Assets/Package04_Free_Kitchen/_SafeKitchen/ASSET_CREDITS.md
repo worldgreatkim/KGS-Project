@@ -70,3 +70,15 @@
 - Models3D/CampTentBody·CampTentBodyOpen·CampTentDoor.glb (캠핑 진입 텐트 본체·환기본체·문짝): Gemini 파생 생성(refs/Camp_TentBody*.png, Camp_TentDoor.png — Camp_TentHouse.png에서 한 번에 한 요소씩만 변형) → **Tripo 웹 v3.1 HD 수동 생성**(API 크레딧 소진, 동현님 직접 생성 후 전달) (2026-08-31).
   gltf-transform 감량 57MB→5.1MB(삼각형 193만→15만), 텍스처 2048. 문짝은 좌우 절반으로 분할해 td_L/td_R.asset 생성.
   머티리얼 밝기 보정: 기존 CampTent.glb 캔버스 밝기(144.2) 기준 Body 0.916 / BodyOpen 0.811 / Door 채널별(0.872,0.834,0.970)
+
+## Mod_WallFanBody.glb / Mod_WallFanRotor.glb — 2026-09-01 04:43
+- 파일: `Assets/Models3D/Mod_WallFanBody.glb`, `Assets/Models3D/Mod_WallFanRotor.glb`
+- 출처: 생성형 AI. 레퍼런스 이미지 = Google Gemini, 3D 변환 = Tripo Studio (웹, `깔끔한 토폴로지` 옵션)
+- 라이선스: Tripo 유료 구독(Pro) 산출물. 상업적 이용 가능
+- 후처리: gltf-transform weld → simplify(ratio 0.02, error 0.003) → resize 512 → prune
+  - 로터 986,728v / 1,932,144tri / 56.1MB → **27,015v / 38,638tri / 1.14MB**
+  - 하우징 2.98MB → **349KB** (텍스처 4096 → 512)
+- 생성 프롬프트 (하우징):
+  > Soft matte 3D render, pastel game-asset style, isolated on pure white. A SQUARE wall-mounted kitchen exhaust fan HOUSING ONLY, with NO fan blades and NO center hub. A thick cream ivory (#F5EDD5) square outer frame with softly rounded corners, and inside it a deep navy blue (#2E3A63) square recessed box that is completely EMPTY in the middle. Shallow depth, like a ventilation fan casing mounted flat on a wall. Straight front view, perfectly square silhouette, centered and fully inside the frame, pure white background, no shadow, no wall, single object only.
+- 생성 프롬프트 (로터):
+  > Soft matte 3D render, pastel game-asset style, isolated on pure white. A fan ROTOR ONLY: five mint green (#8FE3B5) curved fan blades arranged radially around a small cream ivory (#F5EDD5) center hub. No outer ring, no housing, no frame, no square, no background object. Just the blades and hub floating alone. Straight front view, centered, pure white background, no shadow, single object only.

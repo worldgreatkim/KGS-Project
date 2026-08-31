@@ -26,6 +26,7 @@ public static class SKData
     public const float INTERACT_D = 1.25f;  // 상호작용 거리
     public const float DEMO_DUR = 60f;      // 데모 길이
     public const float COMBO_WINDOW = 4f;   // 콤보 유지 시간
+    public const float FAN_SPIN = 400f;     // 벽 환풍기 로터 회전 속도(도/초)
     public const int COMBO_MAX = 4;
     public const int BASE_PTS = 100;
     public const int RETRY_PTS = 40;

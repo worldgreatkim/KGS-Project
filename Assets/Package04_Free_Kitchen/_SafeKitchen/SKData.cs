@@ -27,6 +27,9 @@ public static class SKData
     public const float DEMO_DUR = 60f;      // 데모 길이
     public const float COMBO_WINDOW = 4f;   // 콤보 유지 시간
     public const float FAN_SPIN = 400f;     // 벽 환풍기 로터 회전 속도(도/초)
+    public const float BTS_SPEED = 0.42f;   // 부탄가스 소년단 접근 속도(m/s)
+    public static bool BTS_HOP = true;      // true=통통 점프(트랜스폼), false=FBX 걷기 애니메이션
+    public static readonly Vector3 BTS_GOAL_MOD = new Vector3(16.95f, 0f, 10.10f);  // 앞줄 가스레인지 앞 도달 지점
     public const int COMBO_MAX = 4;
     public const int BASE_PTS = 100;
     public const int RETRY_PTS = 40;
@@ -46,6 +49,7 @@ public static class SKData
         {"hose",   new Vector3(7.6f,  1.5f,  14.0f)},
         {"butane", new Vector3(11.2f, 1.5f,  13.9f)},
         {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
+        {"bts",    new Vector3(3.0f,  0.0f,  6.6f)},
     };
 
     // ---- 위험 위치 (MOD 아일랜드 배치 — SafeKitchen3D_MOD.unity, 2026-08-29 스케치 반영) ----
@@ -60,6 +64,7 @@ public static class SKData
         {"hose",   new Vector3(17.4f, 1.5f,  1.2f)},
         {"butane", new Vector3(17.3f, 1.5f,  8.2f)},
         {"kid",    new Vector3(4.5f,  0.0f,  11.0f)},
+        {"bts",    new Vector3(16.95f, 0.0f, 13.80f)},   // 등장 위치 (여기서 화구로 걸어옴)
     };
 
     // ---- 위험 위치 (원본 맵 19.2×10.8 — SafeKitchen3D.unity 쿼터뷰 씬용) ----
@@ -73,6 +78,7 @@ public static class SKData
         {"hose",   new Vector3(7.6f,  1.5f,  9.0f)},
         {"butane", new Vector3(11.2f, 1.5f,  8.9f)},
         {"kid",    new Vector3(3.0f,  0.0f,  3.2f)},
+        {"bts",    new Vector3(3.0f,  0.0f,  6.6f)},
     };
 
     // ---- 캠핑 교육 스테이지 (SafeKitchen3D_CAMP) — 시간 무제한, 체크리스트 5종 ----
@@ -158,6 +164,12 @@ public static class SKData
                 new Opt { t = "불 끄고 뚜껑 덮기", ok = true },
                 new Opt { t = "물을 붓는다", no = "기름불에 물은 폭발 확산!!" },
                 new Opt { t = "입으로 분다", no = "불씨가 날려서 더 위험!" } } } },
+        {"bts", new Ev { q = "부탄가스 소년단이 화구로 다가와!", ttl = 9f,
+            toast = "부탄캔은 불 근처 금지 — 서늘하고 통풍되는 곳에!",
+            icons = new List<Opt> {
+                new Opt { t = "붙잡아 안전한 곳으로", ok = true },
+                new Opt { t = "그냥 둔다", no = "가열되면 캔이 터져!" },
+                new Opt { t = "물을 뿌려 식힌다", no = "열원에서 떼어내는 게 먼저야!" } } } },
         {"kid", new Ev { q = "아이가 화구 쪽으로 가고 있어!", ttl = 14f,
             toast = "어린이는 가스레인지 근처 금지 — 꼭 어른과 함께!",
             icons = new List<Opt> {

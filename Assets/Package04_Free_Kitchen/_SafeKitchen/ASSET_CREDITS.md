@@ -82,3 +82,13 @@
   > Soft matte 3D render, pastel game-asset style, isolated on pure white. A SQUARE wall-mounted kitchen exhaust fan HOUSING ONLY, with NO fan blades and NO center hub. A thick cream ivory (#F5EDD5) square outer frame with softly rounded corners, and inside it a deep navy blue (#2E3A63) square recessed box that is completely EMPTY in the middle. Shallow depth, like a ventilation fan casing mounted flat on a wall. Straight front view, perfectly square silhouette, centered and fully inside the frame, pure white background, no shadow, no wall, single object only.
 - 생성 프롬프트 (로터):
   > Soft matte 3D render, pastel game-asset style, isolated on pure white. A fan ROTOR ONLY: five mint green (#8FE3B5) curved fan blades arranged radially around a small cream ivory (#F5EDD5) center hub. No outer ring, no housing, no frame, no square, no background object. Just the blades and hub floating alone. Straight front view, centered, pure white background, no shadow, single object only.
+
+## Mod_BTS.glb / Mod_BTS2.glb — 부탄가스 소년단 — 2026-09-01 06:19
+- 파일: `Assets/Models3D/Mod_BTS.glb`(점프본), `Assets/Models3D/Mod_BTS2.glb`(걷기 애니메이션본)
+- 출처: 생성형 AI. 레퍼런스 이미지 = Google Gemini, 3D 변환·리깅·걷기 리타겟 = Tripo Studio (웹)
+- 라이선스: Tripo 유료 구독(Pro) 산출물. 상업적 이용 가능
+- 후처리: FBX → glTF 변환(fbx2gltf) → gltf-transform weld → simplify → resize 1024 → prune
+  - Mod_BTS  1,914,265tri / 62.8MB → **30,626tri / 1.74MB**
+  - Mod_BTS2 50,002tri / 34.6MB → **22,500tri / 2.51MB**, 걷기 클립 `preset:biped:walk`(2.33초, 채널 55) 보존
+- 디자인 방향: 참고 이미지를 그대로 차용하지 않고 프로젝트 팔레트·소프트 매트 3D 톤으로 재해석
+- 생성 프롬프트: Soft matte 3D render, pastel game-asset style, isolated on pure white. A cute but MENACING anthropomorphic BUTANE GAS CAN character. Body: warm red-orange (#E2564A) canister with cream (#F5EDD5) band and silver-grey (#C8CCD4) shoulder with red nozzle cap. Face: black wraparound sunglasses, angry slant, frowning mouth. Limbs clearly SEPARATED from the torso with visible empty space. Full body, centered, pure white background, no shadow, single character only.

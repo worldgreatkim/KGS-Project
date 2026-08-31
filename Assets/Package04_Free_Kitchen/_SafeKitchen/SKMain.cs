@@ -76,6 +76,10 @@ public partial class SKMain : MonoBehaviour
         public float t; public float ttl; public bool retry;
         public float reach = SKData.INTERACT_D;   // 상호작용 거리 (밸브 등 개별 조정)
         public List<SKData.Opt> opts;
+        // 이동형 위험(부탄가스 소년단): speed>0 이면 goal 을 향해 걸어온다
+        public Transform walker; public Vector3 goal; public float speed;
+        public Vector3 baseScale = Vector3.one;
+        public bool useAnim;   // FBX 내장 걷기 클립을 재생 중인가
     }
 
     // 상태
@@ -793,11 +797,64 @@ public partial class SKMain : MonoBehaviour
         else if (type == "towel") reach = 2.4f;   // 행주가 조리대 안쪽 — 앞에서도 닿게
         else if (type == "hood") reach = 2.0f;    // 후드는 벽 쪽이라 여유
         else if (type == "boil" || type == "yellow") reach = 1.7f;
+        else if (type == "bts") reach = 1.7f;        // 걸어오는 표적이라 여유
         var node = SpawnMarker(at);
         var bang = SpawnBang(node);
         uid++;
-        hazards.Add(new Hz { id = uid, type = type, def = def, node = node, bang = bang, ttl = def.ttl + 3f, reach = reach });
+        var nhz = new Hz { id = uid, type = type, def = def, node = node, bang = bang, ttl = def.ttl + 3f, reach = reach };
+        if (type == "bts") BtsSetup(nhz);
+        hazards.Add(nhz);
         if (type == "yellow") SetFlame(1, true);
+    }
+
+    /// 부탄가스 소년단 — 화구를 향해 걸어오는 이동형 위험을 준비한다.
+    /// 씬의 비활성 템플릿 BTS_Template 을 복제해 hazard 노드에 붙인다.
+    void BtsSetup(Hz hz)
+    {
+        hz.goal = SKData.BTS_GOAL_MOD;
+        hz.speed = SKData.BTS_SPEED;
+        var tpl = FindKitchenChild("BTS_Template");
+        if (tpl != null)
+        {
+            var go = Instantiate(tpl.gameObject, hz.node.transform);
+            go.name = "bts_body";
+            go.SetActive(true);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            foreach (var c in go.GetComponentsInChildren<Collider>(true)) Destroy(c);
+            hz.walker = go.transform;
+            hz.baseScale = go.transform.localScale;
+            // 걷기 클립이 있으면 애니메이션 모드로 전환 (점프 대신 재생)
+            var ani = go.GetComponentInChildren<Animator>(true);
+            var leg = go.GetComponentInChildren<Animation>(true);
+            if (!SKData.BTS_HOP && (ani != null || leg != null))
+            {
+                hz.useAnim = true;
+                if (ani != null) { ani.enabled = true; ani.speed = 1f; }
+                if (leg != null) { leg.enabled = true; leg.Play(); }
+            }
+            else if (ani != null) ani.enabled = false;
+        }
+        // 도달까지 걸리는 시간을 그대로 제한시간으로 쓴다 — 닿는 순간이 곧 '아차'
+        hz.ttl = Vector3.Distance(hz.node.transform.position, hz.goal) / Mathf.Max(0.01f, hz.speed);
+    }
+
+    /// 한 프레임 전진 + 진행 방향으로 회전 + 통통 튀는 걸음
+    void BtsStep(Hz hz, float dt)
+    {
+        var pos = Vector3.MoveTowards(hz.node.transform.position, hz.goal, hz.speed * dt);
+        hz.node.transform.position = pos;
+        if (hz.walker == null) return;
+        var dir = hz.goal - pos; dir.y = 0f;
+        if (dir.sqrMagnitude > 0.0001f)
+            hz.walker.rotation = Quaternion.Slerp(hz.walker.rotation, Quaternion.LookRotation(dir), 6f * dt);
+        // 다리가 보이는 캐릭터라 미끄러지면 어색하다 — 초당 약 1.8회로 뛰어서 접근한다
+        if (hz.useAnim) { hz.walker.localPosition = Vector3.zero; hz.walker.localScale = hz.baseScale; return; }
+        float h = Mathf.Abs(Mathf.Sin(timeAll * 5.6f + hz.id));
+        hz.walker.localPosition = new Vector3(0f, h * 0.11f, 0f);
+        // 착지 순간(h≈0) 세로로 눌리고 가로로 퍼진다
+        float sq = 1f - (1f - h) * 0.12f;
+        hz.walker.localScale = new Vector3(hz.baseScale.x / sq, hz.baseScale.y * sq, hz.baseScale.z / sq);
     }
 
     void OpenChoice(Hz hz)
@@ -858,6 +915,7 @@ public partial class SKMain : MonoBehaviour
             if (openEv.type == "yellow") SetFlame(1, false);
             if (openEv.type == "hose") MgStart(4);   // 비눗물 점검 미니게임 (연타)
             if (openEv.type == "towel") FlyTowelToSafeZone(openEv.node.transform.position);   // 행주 → 안전지대 바구니
+            if (openEv.type == "bts") FlyBtsToSafeZone(openEv);   // 부탄가스 소년단 → 안전지대로 던지기
             // 환기 계열 정답 → 창문 열림 (6초 후 자동 닫힘)
             if ((openEv.type == "boil" || openEv.type == "yellow" || openEv.type == "hood")
                 && windowOpen != null && windowClosed != null)
@@ -2073,6 +2131,7 @@ public partial class SKMain : MonoBehaviour
                     lp.y = 0.6f + Mathf.Sin(timeAll * 3f + hz.id) * 0.08f;
                     hz.bang.transform.localPosition = lp;
                 }
+                if (hz.speed > 0f) BtsStep(hz, dt);
                 if (hz.t > hz.ttl)
                 {
                     acha++;

@@ -172,6 +172,52 @@ public partial class SKMain
         StartCoroutine(FlyTowelCo(from + new Vector3(0, 0.3f, 0), to));
     }
 
+    /// 부탄가스 소년단을 안전지대 바구니로 던져 보낸다.
+    /// 행주와 달리 대역 큐브가 아니라 실제 캐릭터 메시가 날아간다.
+    void FlyBtsToSafeZone(Hz hz)
+    {
+        if (hz.walker == null) return;
+        var basket = GameObject.Find("SafeBasket");
+        if (basket == null) return;
+        var b = RB(basket);
+        var to = new Vector3(b.center.x, b.max.y + 0.05f, b.center.z);
+        var w = hz.walker;
+        w.localScale = hz.baseScale;   // 착지 스쿼시가 남은 채 날아가지 않게 복구
+        w.SetParent(null, true);   // hazard 노드가 Pop 으로 사라져도 살아남게 분리
+        hz.walker = null;
+        hz.speed = 0f;
+        StartCoroutine(FlyBtsCo(w, to));
+    }
+
+    IEnumerator FlyBtsCo(Transform w, Vector3 to)
+    {
+        Vector3 from = w.position;
+        Vector3 s0 = w.localScale;
+        SKSound.Sfx("sfx_swing", 0.7f, 1.1f);
+        float dur = 0.7f, t = 0f;
+        while (t < dur && w != null)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / dur);
+            var p = Vector3.Lerp(from, to, k);
+            p.y += Mathf.Sin(k * Mathf.PI) * 1.5f;              // 바구니가 2m 안쪽이라 낮은 포물선
+            w.position = p;
+            w.rotation = Quaternion.Euler(k * 620f, k * 300f, k * 140f);   // 빙글빙글
+            yield return null;
+        }
+        if (w == null) yield break;
+        SKSound.Sfx("sfx_popup", 0.8f, 1.25f);
+        AddFloat(to + new Vector3(0, 0.4f, 0), "안전지대로!");
+        float s = 0f;
+        while (s < 0.25f && w != null)
+        {
+            s += Time.deltaTime;
+            w.localScale = s0 * Mathf.Lerp(1f, 0.01f, s / 0.25f);
+            yield return null;
+        }
+        if (w != null) Destroy(w.gameObject);
+    }
+
     IEnumerator FlyTowelCo(Vector3 from, Vector3 to)
     {
         // 납작한 분홍 행주 (절차 생성 — 바구니 속 행주와 같은 톤)

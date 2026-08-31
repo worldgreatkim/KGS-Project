@@ -1125,3 +1125,50 @@ fix: 뒷벽 기울기 교정 및 창문·환풍기 2쌍 벽 밀착
 - 이번에도 `transform.position` 이 아니라 **렌더러 바운즈 중심**으로 정렬해야 했음. 밸브는 피벗과 렌더 위치가 1.43m 어긋나 있어 pos 기준으로 맞췄다면 그대로 틀렸을 것
 ### 커밋
 fix: 가스밸브 레버·회전축을 몸체에 정렬
+
+## [구현] 부탄가스 소년단(BTS) 이동 위험 + 이동 방식 비교 데모 — 2026-09-01 06:19
+### 프롬프트
+일단 우리 BTS, 부탄가스 소년단 캐릭터를 만들어야해
+<구현>일단 FBX 형태로 줄테니깐 통통 뛰는거랑 걷기 애니메이션 적용된거 둘다 보여줘. 내가 보고 판단한다.
+실제 플레이 하는걸 보고 싶으니깐 통통 튀는것과 걷기 둘다 게임 시작 버튼 누르면 바로 보여줘. 훈련은 잠시 스킵하구
+### 조작 내역
+- **이동형 위험 시스템**: `Hz` 에 `walker`/`goal`/`speed`/`baseScale`/`useAnim` 추가, `BtsSetup()` `BtsStep()` 신설
+  - 고정 마커였던 기존 위험과 달리 노드가 화구로 전진. 도달 시간을 그대로 `ttl` 로 써서 닿는 순간이 '아차'가 됨
+  - `SKData`: `BTS_SPEED = 0.42f`, `BTS_GOAL_MOD = (16.95, 0, 10.10)`, `BTS_HOP` 스위치, `HZ`/`HZ_OLD`/`HZ_MOD`/`EV` 에 `bts` 추가
+- **던지기 연출**: `FlyBtsToSafeZone()` / `FlyBtsCo()` — 정답 시 캐릭터 메시를 노드에서 분리해 안전지대 바구니로 포물선(1.5m, 0.7초) 이동 후 축소. 행주와 달리 대역 큐브가 아닌 실제 메시가 날아감
+- **에셋 파이프라인 확장**: Tripo FBX 는 gltf-transform 이 못 다루므로 `fbx2gltf` 를 npmtools 에 추가해 FBX → GLB 경로 확보
+- **비교 데모**: `SKBtsDemo.cs` 신설 + `SKData.DEMO_BTS` 플래그. `TrySpawn()` 첫 줄에서 데모 중 위험 스폰 차단. 씬에 `BTS_Template`(점프) / `BTS2_Template`(걷기) 비활성 보관
+### 검증
+- `read_console(error)` **0건** (컴파일 4회 모두)
+- 플레이 실측: `demo_walk` (17.550, 0.300, 12.607) scale 0.484 균일 · `demo_jump` (16.350, 0.053, 12.607) scale (0.653, 0.534, 0.653) — **스쿼시로 y 가 눌리고 x/z 가 퍼진 것 확인**
+- `hazard` 노드 0개 — 데모 중 위험 스폰 차단 정상 동작
+- 에디트 모드 `AnimationClip.SampleAnimation` 으로 플레이 없이 GIF 3종 생성 (점프 36프레임 / 걷기 42프레임 / 나란히 42프레임)
+- 좌우 판별을 눈짐작이 아니라 `WorldToViewportPoint` 로 계산 — 크롭 168px 중 걷기본 61px, 점프본 112px → 걷기본이 화면 왼쪽
+### 실패와 수정
+- 첫 FBX(`Mod_BTS`)에 **AnimationClip 0개** — Auto Rig 만 하고 Retarget 미실행. 본 41개는 정상. 사용자에게 알리고 걷기본을 별도 수령
+- BTS2 를 처음 ratio 0.05 로 깎아 3,320tri 가 되어 BTS(30,626tri)와 품질 격차 발생 → 비교가 불공정해져 ratio 0.45 로 재작업(22,500tri)
+- 문자열 앵커에 여러 줄(`\r\n` 포함)을 쓰다 치환 실패. **한 줄 앵커를 쓸 것**
+- 62.8MB FBX 임포트 중 브리지 타임아웃 2회. 대용량 임포트 후에는 60초 이상 대기 필요
+### 커밋
+feat: 부탄가스 소년단 이동 위험 + 이동 방식 비교 데모
+
+## [수정] 점프본 확정 · 걷기 애니메이션 보류 · 데모 장치 철거 — 2026-09-01 06:21
+### 프롬프트
+일단 통통 튀는걸로 놔두고 걷기 이모션은 보류하자.
+### 조작 내역
+- 씬에서 `SKBtsDemo` 컴포넌트(Game 오브젝트)와 `BTS2_Template` 제거
+- `SKBtsDemo.cs` 삭제, `SKData` 의 `DEMO_BTS`·`DEMO_LANE_*`·`DEMO_FROM_Z`·`DEMO_TO_Z`·`DEMO_PAUSE` 제거
+- `TrySpawn()` 의 데모 억제 가드 제거 → 훈련 위험 스폰 원복
+- 임시 프레임 폴더 `_btsjump` `_btscmp` `_btswalk` 및 압축 해제 스크립트 정리
+- **보존**: `Mod_BTS2.glb`(걷기 클립 포함)는 디스크에 그대로 둠. 씬에서 참조하지 않으므로 빌드에는 포함되지 않음. 나중에 재개할 때 템플릿만 다시 만들면 됨
+- **유지**: `BTS_HOP` 스위치와 `Hz.useAnim` 분기는 남겨둠 — 걷기본으로 갈아탈 때 코드 수정 없이 플래그만 내리면 됨
+### 검증
+- `read_console(error)` **0건**
+- 리플렉션 확인: `DEMO_BTS` 필드 제거됨=True, `SKBtsDemo` 타입 제거됨=True
+- 기능 유지 확인: `BtsSetup`/`BtsStep`/`FlyBtsToSafeZone` 존재=True, `EV[bts]`=True, `HZ_MOD[bts]`=(16.95, 0, 13.80)
+- 씬 상태: `BTS_Template` 1개(점프본, 비활성 보관) · `BTS2_Template` 0개
+- `SKData.BTS_HOP = True`, `BTS_SPEED = 0.42`
+### 실패와 수정
+없음
+### 커밋
+chore: 점프본 확정 및 BTS 비교 데모 철거

@@ -2112,7 +2112,8 @@ public partial class SKMain : MonoBehaviour
                     UnityEngine.SceneManagement.SceneManager.LoadScene(SCENES[si]);
                     return;
                 }
-            if (titleT > 0.4f && (SKIn.Down(KeyCode.Space) || SKIn.Down(KeyCode.Return)))
+            // 마우스 클릭으로도 시작 — 화면의 '시작' 문구를 눌러보는 사람이 많다
+            if (titleT > 0.4f && (SKIn.Down(KeyCode.Space) || SKIn.Down(KeyCode.Return) || SKIn.MouseDown()))
             {
                 titleOpen = false;
                 if (titleVidImg != null && titleVidImg.texture != null) Destroy(titleVidImg.texture);

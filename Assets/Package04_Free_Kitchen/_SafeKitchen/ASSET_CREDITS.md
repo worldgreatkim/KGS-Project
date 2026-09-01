@@ -111,3 +111,5 @@
 - Audio/vo_tut_8.wav · vo_bts_warn·move·done.wav (부탄가스 소년단 대사 4종): Typecast API TTS — 'Justice Roh(정의로)', ssfm-v30, 감정 프리셋 toneup/angry/happy (2026-09-02). 기존 vo_* 대사와 동일 성우·모델
 
 - Audio/vo_tut_8.wav · vo_bts_warn·move·done.wav (부탄가스 소년단 대사 4종): Typecast API TTS — 'Justice Roh(정의로)', ssfm-v30, 감정 프리셋 toneup/angry/happy (2026-09-02). 기존 vo_* 대사와 동일 성우·모델
+
+- Audio/sfx_bts_alert (부탄캔 등장 경보음): ElevenLabs SFX 생성 (2026-09-02), 프롬프트: "short dramatic boss appearance sting for a cartoon game: two deep impact hits then a rising alarm beep, punchy, clean, no music tail", 2.0초

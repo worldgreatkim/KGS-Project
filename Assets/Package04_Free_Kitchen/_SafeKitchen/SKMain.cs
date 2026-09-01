@@ -81,6 +81,7 @@ public partial class SKMain : MonoBehaviour
         public Vector3 baseScale = Vector3.one;
         public bool useAnim;   // FBX 내장 걷기 클립을 재생 중인가
         public Vector3 via; public bool hasVia;   // 조리대를 관통하지 않도록 거치는 지점
+        public Renderer ring;   // 발밑 강조 고리 (깜빡임)
     }
 
     // 상태
@@ -947,6 +948,8 @@ public partial class SKMain : MonoBehaviour
         }
         var pos = Vector3.MoveTowards(hz.node.transform.position, aim, hz.speed * dt);
         hz.node.transform.position = pos;
+        if (hz.ring != null)   // 붉은 고리 깜빡임
+            hz.ring.enabled = (Mathf.FloorToInt(timeAll * SKData.BTS_BLINK_HZ) % 2) == 0;
         if (hz.walker == null) return;
         var dir = aim - pos; dir.y = 0f;
         if (dir.sqrMagnitude > 0.0001f)
@@ -1047,56 +1050,60 @@ public partial class SKMain : MonoBehaviour
         hazards.Remove(hz);
     }
 
-    Vector3 btsCamPos; Quaternion btsCamRot; bool btsCamSaved;
-
-    /// 연출용 카메라 이동 — 캠핑용 CampCamTo 와 달리 배경·바닥 색을 건드리지 않는다.
-    void BtsCamTo(Vector3 center, float dist, float pitch)
-    {
-        if (cam == null) return;
-        if (!btsCamSaved) { btsCamPos = cam.transform.position; btsCamRot = cam.transform.rotation; btsCamSaved = true; }
-        float rad = pitch * Mathf.Deg2Rad;
-        cam.transform.position = center + new Vector3(0f, Mathf.Sin(rad), Mathf.Cos(rad)) * dist;
-        cam.transform.rotation = Quaternion.Euler(pitch, 180f, 0f);
-    }
-
-    void BtsCamRestore()
-    {
-        if (cam == null || !btsCamSaved) return;
-        cam.transform.position = btsCamPos;
-        cam.transform.rotation = btsCamRot;
-        btsCamSaved = false;
-    }
-
-    /// 부탄캔 등장 연출 — 캔을 클로즈업해 레드레인저가 대처법을 설명하고, 시점을 되돌린 뒤
-    /// 위험지대(불붙은 화구)에 붉은 원을 남긴다. 아이리스는 쓰지 않는다.
+    /// 부탄캔 등장 연출 — 카메라는 건드리지 않는다.
+    /// 클로즈업은 조리대 안에 카메라가 박히는 사고가 나서 폐기하고, 발밑 붉은 고리 + 깜빡임으로 대체했다.
     IEnumerator BtsIntroCo(Hz hz)
     {
-        campCut = true;                     // 연출 동안 조작 잠금
-        float sp = hz.speed; hz.speed = 0f; // 캔도 멈춰 세운다
-        // 노드는 발밑 빈 좌표다 — 실제 캔 메시의 중심을 겨눠야 빈 공간을 비추지 않는다
-        Vector3 look = hz.node.transform.position + new Vector3(0f, SKData.BTS_CUT_UP, 0f);
-        if (hz.walker != null)
-        {
-            var wr = hz.walker.GetComponentsInChildren<Renderer>(true);
-            if (wr.Length > 0)
-            {
-                var wb = wr[0].bounds;
-                foreach (var r in wr) wb.Encapsulate(r.bounds);
-                look = wb.center;
-            }
-        }
-        BtsCamTo(look,
-                 SKData.BTS_CUT_DIST, SKData.BTS_CUT_PITCH);
-        SKSound.Sfx("sfx_blackout", 0.9f, 0.62f);   // 저음으로 눌러 '두둥' 느낌
+        campCut = true;                     // 대사 읽는 동안 조작 잠금
+        float sp = hz.speed; hz.speed = 0f; // 설명 동안 캔은 멈춰 있는다
+        MakeBtsRing(hz);
+        SKSound.Sfx("sfx_bts_alert");
+        PunchZoom();
         StartCoroutine(Shake());
         Say("저 부탄캔이 불붙은 화구로 다가가고 있다!", SKData.BTS_CUT_HOLD);
         yield return new WaitForSeconds(SKData.BTS_CUT_HOLD);
         Say("위험지대에 들어가기 전에 [SPACE] 로 붙잡아 안전지대로 옮겨놓자!", SKData.BTS_CUT_TELL);
         yield return new WaitForSeconds(SKData.BTS_CUT_TELL);
-        BtsCamRestore();                    // 시점 복귀
         MakeDangerRing();                   // 위험지대를 붉은 원으로 표시
-        hz.speed = sp;
+        hz.speed = sp;                      // 이제 다가온다
         campCut = false;
+    }
+
+    /// 캔 발밑에 붉은 고리를 깔아 어디 있는지 바로 보이게 한다. 노드에 붙여 따라다닌다.
+    void MakeBtsRing(Hz hz)
+    {
+        if (hz.ring != null || hz.node == null) return;
+        var go = new GameObject("bts_ring");
+        go.transform.SetParent(hz.node.transform, false);
+        go.transform.localPosition = new Vector3(0f, SKData.BTS_RING_Y, 0f);
+        go.AddComponent<MeshFilter>().sharedMesh = RingMesh(SKData.BTS_RING_IN, SKData.BTS_RING_OUT);
+        var mr = go.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = Flat(new Color(0.95f, 0.22f, 0.20f));
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = false;
+        hz.ring = mr;
+    }
+
+    /// 수평 고리 메시 (안지름 ri, 바깥지름 ro)
+    Mesh RingMesh(float ri, float ro)
+    {
+        int N = 40;
+        var vs = new List<Vector3>(); var ts = new List<int>();
+        for (int i = 0; i < N; i++)
+        {
+            float a0 = (i / (float)N) * Mathf.PI * 2f, a1 = ((i + 1) / (float)N) * Mathf.PI * 2f;
+            int b = vs.Count;
+            vs.Add(new Vector3(Mathf.Cos(a0) * ri, 0f, Mathf.Sin(a0) * ri));
+            vs.Add(new Vector3(Mathf.Cos(a0) * ro, 0f, Mathf.Sin(a0) * ro));
+            vs.Add(new Vector3(Mathf.Cos(a1) * ro, 0f, Mathf.Sin(a1) * ro));
+            vs.Add(new Vector3(Mathf.Cos(a1) * ri, 0f, Mathf.Sin(a1) * ri));
+            ts.Add(b); ts.Add(b + 1); ts.Add(b + 2);
+            ts.Add(b); ts.Add(b + 2); ts.Add(b + 3);
+        }
+        var mesh = new Mesh();
+        mesh.SetVertices(vs); mesh.SetTriangles(ts, 0);
+        mesh.RecalculateNormals(); mesh.RecalculateBounds();
+        return mesh;
     }
 
     GameObject dangerRing;

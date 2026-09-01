@@ -215,7 +215,6 @@ public partial class SKMain
             uid++;
             var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
             BtsSetup(hz);
-            hz.via = SKData.TUT_BTS_VIA; hz.hasVia = true;   // 조리대 관통 방지
             hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
             hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
             hazards.Add(hz);
@@ -250,6 +249,13 @@ public partial class SKMain
 
     void TutUpdate(float dt)
     {
+        // 이 분기에서는 본편 해저드 루프가 돌지 않는다 — 부탄캔만 따로 움직여 준다
+        for (int i = 0; i < hazards.Count; i++)
+        {
+            var h = hazards[i];
+            if (h.speed > 0f) BtsStep(h, dt);
+            if (h.bang != null) h.bang.transform.rotation = cam.transform.rotation;
+        }
         // 화살표 둥실
         if (arrowGo != null)
         {

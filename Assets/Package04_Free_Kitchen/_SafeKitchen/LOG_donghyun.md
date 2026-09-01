@@ -1612,3 +1612,24 @@ feat: 부탄가스 소년단 대사 4종 (Typecast)
 - 사용자가 API 키를 대화에 노출 — 폐기·재발급 권고함
 ### 커밋
 feat: 부탄가스 소년단 대사 4종 (Typecast)
+
+## [구현] 부탄가스 소년단 대사 4종 생성 — 2026-09-02 06:41
+### 프롬프트
+이게 API야 / 너가 직접 사용해
+### 조작 내역
+- **새 키를 쓰지 않음** — 기존 `typecast_key.txt` 로 인증이 통과해 키 파일을 손대지 않았다. `.gitignore` 41~43행에 `tripo_key/eleven_key/typecast_key` 가 이미 등록돼 있음
+- `SKTypecast.FindVoice` 로 보이스 확인 — 한글명 '정의로' 로는 못 찾고 **`Justice Roh`** 로 검색해야 나옴. `voice_id = tc_608820eb05b71bc949df989d`, model `ssfm-v30`
+- `SKTypecast.Say` 로 4종 생성
+  - `vo_tut_8` (toneup 1.6) — 튜토리얼 8단계 대사
+  - `vo_bts_warn` (angry 1.8) · `vo_bts_move` (toneup 1.6) · `vo_bts_done` (happy 1.4) — 본편 등장·조작·성공
+- 대사는 화면 자막과 동일하게 맞추고 `[SPACE]` 는 '스페이스' 로 읽히게 표기
+### 검증
+- API 응답 확인: 보이스 목록 192,802 bytes 수신 → 인증 정상
+- 생성 결과 `OK vo_bts_warn.wav (213KB)` · `OK vo_bts_move.wav (267KB)` · `OK vo_bts_done.wav (348KB)` · `vo_tut_8.wav (736KB)`
+- 파일·meta 생성 확인
+### 실패와 수정
+- `SKTypecast.Say` 내부의 `AssetDatabase.ImportAsset` 은 **메인 스레드 전용**이라 백그라운드 Task 로 돌리면 예외. 다만 예외는 `File.WriteAllBytes` **뒤**에 발생해 wav 는 남았다 → 메인 스레드로 옮겨 재실행. 브리지는 타임아웃 나지만 작업은 완주
+- 그 여파로 `vo_tut_8.wav` 가 604KB → 736KB 로 두 번 쓰였다. **재생 확인 필요**
+- 사용자가 API 키를 대화에 노출 — 폐기·재발급 권고함
+### 커밋
+feat: 부탄가스 소년단 대사 4종 (Typecast)

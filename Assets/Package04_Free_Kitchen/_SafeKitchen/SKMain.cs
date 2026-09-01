@@ -80,6 +80,7 @@ public partial class SKMain : MonoBehaviour
         public Transform walker; public Vector3 goal; public float speed;
         public Vector3 baseScale = Vector3.one;
         public bool useAnim;   // FBX 내장 걷기 클립을 재생 중인가
+        public Vector3 via; public bool hasVia;   // 조리대를 관통하지 않도록 거치는 지점
     }
 
     // 상태
@@ -937,10 +938,17 @@ public partial class SKMain : MonoBehaviour
     /// 한 프레임 전진 + 진행 방향으로 회전 + 통통 튀는 걸음
     void BtsStep(Hz hz, float dt)
     {
-        var pos = Vector3.MoveTowards(hz.node.transform.position, hz.goal, hz.speed * dt);
+        // 경유점이 있으면 먼저 그쪽으로 — BTS 는 길찾기를 하지 않아 직선이 막히면 관통한다
+        var aim = hz.goal;
+        if (hz.hasVia)
+        {
+            var flat = hz.node.transform.position - hz.via; flat.y = 0f;
+            if (flat.magnitude > SKData.BTS_VIA_EPS) aim = hz.via; else hz.hasVia = false;
+        }
+        var pos = Vector3.MoveTowards(hz.node.transform.position, aim, hz.speed * dt);
         hz.node.transform.position = pos;
         if (hz.walker == null) return;
-        var dir = hz.goal - pos; dir.y = 0f;
+        var dir = aim - pos; dir.y = 0f;
         if (dir.sqrMagnitude > 0.0001f)
             hz.walker.rotation = Quaternion.Slerp(hz.walker.rotation, Quaternion.LookRotation(dir), 6f * dt);
         // 다리가 보이는 캐릭터라 미끄러지면 어색하다 — 초당 약 1.8회로 뛰어서 접근한다
@@ -1065,13 +1073,25 @@ public partial class SKMain : MonoBehaviour
     {
         campCut = true;                     // 연출 동안 조작 잠금
         float sp = hz.speed; hz.speed = 0f; // 캔도 멈춰 세운다
-        BtsCamTo(hz.node.transform.position + new Vector3(0f, SKData.BTS_CUT_UP, 0f),
+        // 노드는 발밑 빈 좌표다 — 실제 캔 메시의 중심을 겨눠야 빈 공간을 비추지 않는다
+        Vector3 look = hz.node.transform.position + new Vector3(0f, SKData.BTS_CUT_UP, 0f);
+        if (hz.walker != null)
+        {
+            var wr = hz.walker.GetComponentsInChildren<Renderer>(true);
+            if (wr.Length > 0)
+            {
+                var wb = wr[0].bounds;
+                foreach (var r in wr) wb.Encapsulate(r.bounds);
+                look = wb.center;
+            }
+        }
+        BtsCamTo(look,
                  SKData.BTS_CUT_DIST, SKData.BTS_CUT_PITCH);
         SKSound.Sfx("sfx_blackout", 0.9f, 0.62f);   // 저음으로 눌러 '두둥' 느낌
         StartCoroutine(Shake());
         Say("저 부탄캔이 불붙은 화구로 다가가고 있다!", SKData.BTS_CUT_HOLD);
         yield return new WaitForSeconds(SKData.BTS_CUT_HOLD);
-        Say("화구에 닿기 전에 캔에 다가가 [SPACE] 로 안전지대에 보내라!", SKData.BTS_CUT_TELL);
+        Say("위험지대에 들어가기 전에 [SPACE] 로 붙잡아 안전지대로 옮겨놓자!", SKData.BTS_CUT_TELL);
         yield return new WaitForSeconds(SKData.BTS_CUT_TELL);
         BtsCamRestore();                    // 시점 복귀
         MakeDangerRing();                   // 위험지대를 붉은 원으로 표시

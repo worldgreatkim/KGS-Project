@@ -37,6 +37,9 @@ public static class SKData
     public const float BTS_BRIEF_2 = 3.2f;   // 위험 설명 2단계
     public const float BTS_BRIEF_3 = 3.6f;   // 조작 안내 3단계
     public const float TUT_BTS_SLOW = 0.55f; // 튜토리얼 연습용 속도 배율
+    public static readonly Vector3 TUT_BTS_FROM = new Vector3(3.40f, 0f, 2.20f);  // 훈련용 등장 — 냉장고 앞
+    public static readonly Vector3 TUT_BTS_VIA  = new Vector3(11.50f, 0f, 2.60f); // 경유점 — 아일랜드 사이 통로 입구
+    public const float BTS_VIA_EPS = 0.45f;  // 경유점 도달 판정 반경
     // --- 부탄캔 등장 연출 ---
     public const float BTS_CUT_UP = 0.45f;    // 캔 중심보다 이만큼 위를 겨눈다
     public const float BTS_CUT_DIST = 2.8f;   // 클로즈업 거리

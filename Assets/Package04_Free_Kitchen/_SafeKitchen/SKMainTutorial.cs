@@ -18,7 +18,7 @@ public partial class SKMain
         "완벽해! 이번엔 소화기 훈련이다.\n구석의 소화기로 가서 [SPACE]로 들어 봐!",
         "훈련용 불꽃을 붙였다! 불 쪽을 바라보고\n[마우스 왼쪽]을 꾹 눌러 분사 — 좌우로 쓸면 더 빨리 꺼진다!",
         "다음 훈련! 가스 사고의 기본은 밸브 차단이다.\n가스밸브 앞에서 [SPACE] — 연타로 밸브를 잠가 봐!",
-        "마지막 훈련! 부탄캔은 불 근처에서 가열되면 터진다.\n불붙은 화구로 다가오는 캔을 쫓아가 [SPACE]로 붙잡아!",
+        "마지막 훈련! 부탄캔은 불 근처에서 가열되면 터진다.\n위험지대에 들어가기 전에 [SPACE]로 붙잡아 안전지대로 옮겨놓자!",
         "축하한다, 기초 훈련 수료!\n이제 진짜 주방이다 — 위험을 찾아 해결하고 점수를 모아라!",
     };
     static readonly int[] TUT_GATES = {
@@ -210,11 +210,12 @@ public partial class SKMain
         {
             // 연습용 부탄캔 — 시간 제한 없이 천천히 다가온다
             var def = SKData.EV["bts"];
-            var node = SpawnMarker(BtsSpawnPoint());
+            var node = SpawnMarker(SKData.TUT_BTS_FROM);   // 훈련은 냉장고 앞 고정 등장
             var bang = SpawnBang(node);
             uid++;
             var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
             BtsSetup(hz);
+            hz.via = SKData.TUT_BTS_VIA; hz.hasVia = true;   // 조리대 관통 방지
             hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
             hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
             hazards.Add(hz);

@@ -1050,23 +1050,61 @@ public partial class SKMain : MonoBehaviour
         hazards.Remove(hz);
     }
 
-    /// 부탄캔 등장 연출 — 카메라는 건드리지 않는다.
-    /// 클로즈업은 조리대 안에 카메라가 박히는 사고가 나서 폐기하고, 발밑 붉은 고리 + 깜빡임으로 대체했다.
-    IEnumerator BtsIntroCo(Hz hz)
+    public bool btsIntroRunning;   // 안내 중에는 게이트를 통과시키지 않는다
+
+    /// 훈련용 부탄캔 안내 — 설명을 먼저 하고, 대사가 끝난 뒤에 캔이 등장해 걸어온다.
+    /// 캔을 먼저 만들면 밸브 훈련 직후의 플레이어와 겹쳐 보이므로 순서를 뒤집었다.
+    IEnumerator BtsIntroCo()
     {
+        btsIntroRunning = true;
         campCut = true;                     // 대사 읽는 동안 조작 잠금
-        float sp = hz.speed; hz.speed = 0f; // 설명 동안 캔은 멈춰 있는다
-        MakeBtsRing(hz);
-        SKSound.Sfx("sfx_bts_alert");
-        PunchZoom();
-        StartCoroutine(Shake());
-        Say("저 부탄캔이 불붙은 화구로 다가가고 있다!", SKData.BTS_CUT_HOLD);
+        MakeDangerRing();                   // 어디가 위험지대인지 먼저 보여준다
+        Say("부탄캔은 불 근처에서 가열되면 터진다 — 저 붉은 원이 위험지대다!", SKData.BTS_CUT_HOLD);
         yield return new WaitForSeconds(SKData.BTS_CUT_HOLD);
         Say("위험지대에 들어가기 전에 [SPACE] 로 붙잡아 안전지대로 옮겨놓자!", SKData.BTS_CUT_TELL);
         yield return new WaitForSeconds(SKData.BTS_CUT_TELL);
-        MakeDangerRing();                   // 위험지대를 붉은 원으로 표시
-        hz.speed = sp;                      // 이제 다가온다
+        SpawnTutBts();                      // 대사가 끝나야 등장
+        SKSound.Sfx("sfx_bts_alert");
+        PunchZoom();
+        StartCoroutine(Shake());
+        Say("저기 온다! 화구에 닿기 전에 붙잡아!", SKData.BTS_CUT_COME);
         campCut = false;
+        btsIntroRunning = false;
+    }
+
+    /// 훈련용 캔 생성 — 시간 제한 없이 느리게 다가온다.
+    void SpawnTutBts()
+    {
+        var def = SKData.EV["bts"];
+        var node = SpawnMarker(TutBtsSpawnPoint());
+        var bang = SpawnBang(node);
+        uid++;
+        var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
+        BtsSetup(hz);
+        hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
+        hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
+        MakeBtsRing(hz);
+        hazards.Add(hz);
+    }
+
+    /// 후보 중 통행 가능하고·카메라에 안 가리고·화구까지 직선이 뚫린 곳 가운데
+    /// 플레이어에게서 가장 먼 지점을 고른다 (캐릭터와 겹침 방지).
+    Vector3 TutBtsSpawnPoint()
+    {
+        Vector3 best = SKData.TUT_BTS_FROM; float bd = -1f;
+        foreach (var p in SKData.TUT_BTS_SPOTS)
+        {
+            if (Blocked(p)) continue;
+            var chest = p + new Vector3(0f, SKData.BTS_SEE_Y, 0f);
+            var v = cam.WorldToViewportPoint(chest);
+            if (v.z <= 0f || v.x < 0.10f || v.x > 0.90f || v.y < 0.15f || v.y > 0.88f) continue;
+            var dir = chest - cam.transform.position;
+            if (Physics.Raycast(cam.transform.position, dir.normalized, dir.magnitude - 0.35f)) continue;   // 오브젝트에 가림
+            if (!BtsPathClear(p, SKData.BTS_GOAL_MOD)) continue;
+            float dd = Vector3.Distance(p, player.position);
+            if (dd > bd) { bd = dd; best = p; }
+        }
+        return best;
     }
 
     /// 캔 발밑에 붉은 고리를 깔아 어디 있는지 바로 보이게 한다. 노드에 붙여 따라다닌다.

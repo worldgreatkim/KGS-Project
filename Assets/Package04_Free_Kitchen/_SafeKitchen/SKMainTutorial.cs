@@ -208,17 +208,7 @@ public partial class SKMain
         }
         else if (gate == TG_BTS)
         {
-            // 연습용 부탄캔 — 시간 제한 없이 천천히 다가온다
-            var def = SKData.EV["bts"];
-            var node = SpawnMarker(SKData.TUT_BTS_FROM);   // 훈련은 냉장고 앞 고정 등장
-            var bang = SpawnBang(node);
-            uid++;
-            var hz = new Hz { id = uid, type = "bts", def = def, node = node, bang = bang, reach = 1.7f };
-            BtsSetup(hz);
-            hz.speed = SKData.BTS_SPEED * SKData.TUT_BTS_SLOW;
-            hz.ttl = 99999f;   // 연습이라 놓쳐도 아차가 뜨지 않는다
-            hazards.Add(hz);
-            StartCoroutine(BtsIntroCo(hz));   // 등장 연출은 튜토리얼에서 한 번만
+            StartCoroutine(BtsIntroCo());   // 설명 → 등장 → 이동 순서는 코루틴이 담당
         }
     }
 
@@ -320,7 +310,7 @@ public partial class SKMain
         {
             bool alive = false;
             foreach (var h in hazards) if (h.type == "bts") alive = true;
-            if (!alive && !tutTyping) TutGateClear();
+            if (!alive && !tutTyping && !btsIntroRunning) TutGateClear();   // 안내 중에는 통과시키지 않는다
         }
         // TG_VALVE: SPACE → 밸브 미니게임(MgStart)이 담당, 성공 시 MgFinish가 TutGateClear 호출
     }

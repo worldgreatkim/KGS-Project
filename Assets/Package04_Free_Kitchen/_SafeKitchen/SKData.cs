@@ -38,6 +38,17 @@ public static class SKData
     public const float BTS_BRIEF_3 = 3.6f;   // 조작 안내 3단계
     public const float TUT_BTS_SLOW = 0.90f; // 훈련용 속도 배율 — 11.30m 를 약 12초에
     public static readonly Vector3 TUT_BTS_FROM = new Vector3(14.19f, 0f, 1.60f); // 훈련용 등장 — 가스밸브 앞 (가림 없음·직선 뚫림)
+    /// 훈련용 등장 후보 — 전부 통행 가능·카메라 가림 없음·화구까지 직선 뚫림으로 실측 확인된 지점.
+    /// 이 중 플레이어에게서 가장 먼 곳을 골라 캐릭터와 겹치지 않게 한다.
+    public static readonly Vector3[] TUT_BTS_SPOTS = {
+        new Vector3(14.19f, 0f,  1.60f),   // 가스밸브 앞
+        new Vector3(14.19f, 0f,  4.20f),
+        new Vector3(14.19f, 0f,  6.50f),
+        new Vector3(13.09f, 0f,  8.18f),   // 방 정중앙
+        new Vector3(12.00f, 0f,  7.00f),
+        new Vector3(11.00f, 0f, 10.00f),   // 앞줄 통로
+    };
+    public const float BTS_SEE_Y = 0.80f;    // 가림 검사에 쓰는 캔 가슴 높이
     public static readonly Vector3 TUT_BTS_VIA  = new Vector3(11.50f, 0f, 2.60f); // 경유점 — 아일랜드 사이 통로 입구
     public const float BTS_VIA_EPS = 0.45f;  // 경유점 도달 판정 반경
     // --- 부탄캔 강조 표시 ---
@@ -51,6 +62,7 @@ public static class SKData
     public const float BTS_CUT_PITCH = 20f;   // 낮은 각도로 올려다본다
     public const float BTS_CUT_HOLD = 2.6f;   // 클로즈업 상태로 1차 설명
     public const float BTS_CUT_TELL = 3.2f;   // 조작 설명 시간
+    public const float BTS_CUT_COME = 2.4f;   // 등장 알림 시간
     public const float RING_IN = 0.72f;       // 위험지대 고리 안지름
     public const float RING_OUT = 0.92f;      // 바깥지름
     public const float RING_UP = 0.22f;       // 조리대 상판(1.67) 위로 올려 묻히지 않게

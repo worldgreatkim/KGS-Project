@@ -99,3 +99,5 @@
 - 라이선스: Unity Asset Store 표준 EULA (구매 계정 프로젝트 내 사용 허용)
 - 씬 배치: `CampFireFx` (13.09, 0.65, 8.18) 스케일 1.6
 - 조정: Smoke size 2.0~4.0 → 0.45~0.85 / rate 10 → 4, 불꽃 size → 0.20~0.95 rate 18, Ember rate 7, Point Light range 10 → 4.6 intensity → 1.5
+
+- Audio/vo_tut_8.wav · vo_bts_warn·move·done.wav (부탄가스 소년단 대사 4종): Typecast API TTS — 'Justice Roh(정의로)', ssfm-v30, 감정 프리셋 toneup/angry/happy (2026-09-02). 기존 vo_* 대사와 동일 성우·모델
